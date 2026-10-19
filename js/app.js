@@ -540,6 +540,7 @@ $("gapOn").addEventListener("change",function(){ RT.metro.setGap({on:$("gapOn").
   $(id).addEventListener("change",function(){ var o={}; o[id==="gapPlay"?"play":"mute"]=$(id).value; RT.metro.setGap(o); renderGap(); });
 });
 renderGap();
+RT.recorder.init();
 function focusOpen(){ return !$("focus").hidden; }
 function setFocus(on){
   $("focus").hidden=!on;
@@ -598,6 +599,7 @@ window.__rt = {
   sync:function(){ var S=RT.sync.state(); return JSON.parse(JSON.stringify({url:S.url,queue:S.queue,lastOk:S.lastOk,lastErr:S.lastErr,status:RT.sync.status()})); },
   syncFlush:function(){ return RT.sync.flush(); },
   ui:function(){ return JSON.parse(JSON.stringify(RT.ui)); },
+  rec:function(){ return RT.recorder.state(); },
   handGap:RT.handGap, summary:RT.buildTextSummary, wake:function(){ return RT.wake.mode; }
 };
 })();

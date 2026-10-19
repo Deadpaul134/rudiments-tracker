@@ -143,6 +143,13 @@
           <label class="sw"><input type="checkbox" id="gapOn"><span class="knob" aria-hidden="true"></span>מטרונום עם הפסקות</label>
           <span class="gap-n" id="gapNums"><input type="number" class="tin sm num" id="gapPlay" min="1" max="16" inputmode="numeric" aria-label="תיבות עם קליק"> עם קליק · <input type="number" class="tin sm num" id="gapMute" min="1" max="16" inputmode="numeric" aria-label="תיבות בשקט"> בשקט</span>
         </div>
+        <div class="tool" id="recTool" data-state="idle">
+          <button type="button" class="btn sm rec-btn" id="recBtn" aria-pressed="false"><i class="rec-dot" aria-hidden="true"></i><span id="recLbl">הקלטה</span></button>
+          <span class="rec-t muted small" id="recTime" aria-live="off"></span>
+          <button type="button" class="btn sm" id="recPlay" disabled><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg><span id="recPlayLbl">השמע</span></button>
+          <span class="rec-msg small" id="recMsg" role="status" hidden></span>
+          <audio id="recAudio" preload="auto" hidden></audio>
+        </div>
       </div>
       <div class="keys muted small" aria-label="קיצורי מקלדת">
         <span><kbd>רווח</kbd> התחל/השהה</span><span><kbd>↑</kbd><kbd>↓</kbd> טמפו ±1 (<kbd>Shift</kbd> ±5)</span><span><kbd>→</kbd><kbd>←</kbd> שלב קודם/הבא</span><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> דירוג</span><span><kbd>F</kbd> מיקוד</span><span><kbd>Esc</kbd> יציאה</span>
@@ -367,6 +374,7 @@
 <script src="js/audio.js"></script>
 <script src="js/sync.js"></script>
 <script src="js/practice.js"></script>
+<script src="js/recorder.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
