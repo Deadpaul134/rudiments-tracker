@@ -53,7 +53,7 @@ function startCount(){
   var s=R()[P.idx];
   P.phase="countin"; P.paused=false; P.count=RT.settings.countIn||4;
   metro.setBpm(s.bpm); metro.setSub(s.sub);
-  metro.start({countIn:RT.settings.countIn||4, onReady:beginPlay});
+  metro.start({countIn:RT.settings.countIn||4, onReady:beginPlay, gap:true});
   RT.keepAwake(true);
   render();
 }
@@ -285,10 +285,11 @@ function renderSteps(){
   });
   var meta=document.getElementById("routineMeta"); if(meta) meta.textContent=steps.length+" שלבים · "+RT.routineMinutes()+" דק'";
 }
-metro.onBeat(function(beat,count){
+metro.onBeat(function(beat,count,silent){
   if(count && beat>=0 && P.phase==="countin"){ P.count=Math.max(1,(RT.settings.countIn||4)-beat); }
   document.querySelectorAll("[data-beats]").forEach(function(box){
     if(box.children.length!==4){ box.innerHTML='<i></i><i></i><i></i><i></i>'; }
+    box.classList.toggle("mute",!!silent);
     [].forEach.call(box.children,function(d,i){ d.classList.toggle("on",i===beat); d.classList.toggle("first",i===0); d.classList.toggle("count",!!count); });
   });
   if(beat>=0 && count) setP("phase","ספירה… "+((RT.settings.countIn||4)-beat));

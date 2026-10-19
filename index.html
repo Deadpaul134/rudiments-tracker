@@ -138,6 +138,12 @@
         <button type="button" class="ctl" id="pNext" aria-label="שלב הבא" title="שלב הבא (←)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM9.5 12l9.5 7V5z"/></svg></button>
         <button type="button" class="btn sm ghost" id="pStop">סיים שגרה</button>
       </div>
+      <div class="tools">
+        <div class="tool" id="gapTool">
+          <label class="sw"><input type="checkbox" id="gapOn"><span class="knob" aria-hidden="true"></span>מטרונום עם הפסקות</label>
+          <span class="gap-n" id="gapNums"><input type="number" class="tin sm num" id="gapPlay" min="1" max="16" inputmode="numeric" aria-label="תיבות עם קליק"> עם קליק · <input type="number" class="tin sm num" id="gapMute" min="1" max="16" inputmode="numeric" aria-label="תיבות בשקט"> בשקט</span>
+        </div>
+      </div>
       <div class="keys muted small" aria-label="קיצורי מקלדת">
         <span><kbd>רווח</kbd> התחל/השהה</span><span><kbd>↑</kbd><kbd>↓</kbd> טמפו ±1 (<kbd>Shift</kbd> ±5)</span><span><kbd>→</kbd><kbd>←</kbd> שלב קודם/הבא</span><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> דירוג</span><span><kbd>F</kbd> מיקוד</span><span><kbd>Esc</kbd> יציאה</span>
       </div>

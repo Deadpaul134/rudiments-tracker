@@ -1,5 +1,5 @@
 /* Metronome: Web Audio look-ahead scheduling (sample-accurate), accent on beat 1, optional subdivision clicks,
-   count-in bar with a distinct sound. Falls back to a silent visual clock when Web Audio is unavailable. */
+   count-in bar with a distinct sound, optional gap mode (X bars click / Y bars silent – the clock keeps running). Falls back to a silent visual clock when Web Audio is unavailable. */
 (function(){
 "use strict";
 var RT = window.RT;
@@ -7,10 +7,19 @@ var RT = window.RT;
 var LOOKAHEAD = 0.12, TICK_MS = 25;
 var m = RT.metro = {
   bpm: 80, sub: 1, meter: 4, running: false,
-  ctx: null, next: 0, tick: 0, timer: null, queue: [], countLeft: 0, gen: 0,
+  ctx: null, next: 0, tick: 0, timer: null, queue: [], countLeft: 0, gen: 0, bar: -1, gapOn: false,
+  gap: {on:false, play:3, mute:1},
   beatFns: [], log: []
 };
-(function(){ var s=RT.readJSON(RT.KEYS.metro,{}); if(s && s.bpm) m.bpm=RT.clampBpm(s.bpm); })();
+function normGap(g){
+  g = RT.isObj(g) ? g : {};
+  function n(v,d){ v=Math.round(+v); return v>=1 && v<=16 ? v : d; }
+  return {on:g.on===true, play:n(g.play,3), mute:n(g.mute,1)};
+}
+(function(){ var s=RT.readJSON(RT.KEYS.metro,{}); if(s && s.bpm) m.bpm=RT.clampBpm(s.bpm); m.gap=normGap(s && s.gap); })();
+function saveMetro(){ RT.writeJSON(RT.KEYS.metro, {bpm:m.bpm, gap:m.gap}); }
+// pure: is bar n (0 = first bar after the count-in) silent under gap setting g?
+RT.gapSilent = function(n, g){ return !!(g && g.on) && n >= 0 && (n % (g.play + g.mute)) >= g.play; };
 
 function ensureAudio(){
   var AC = window.AudioContext || window.webkitAudioContext;
@@ -47,10 +56,13 @@ function scheduler(){
     var perBar = m.meter * sub, k = m.tick % perBar;
     var isBeat = k % sub === 0, beatIdx = Math.floor(k / sub);
     var subOn = RT.settings.subClicks !== false;
-    if(counting) click(m.next, 3);
+    if(!counting && k===0) m.bar++;
+    var silent = !counting && m.gapOn && RT.gapSilent(m.bar, m.gap);
+    if(silent){ /* scheduled silence: keep time, no click */ }
+    else if(counting) click(m.next, 3);
     else if(isBeat) click(m.next, k===0 ? 2 : 1);
     else if(subOn) click(m.next, 0);
-    if(isBeat) m.queue.push({time:m.next, beat:beatIdx, count:counting});
+    if(isBeat) m.queue.push({time:m.next, beat:beatIdx, count:counting, silent:silent});
     m.next += 60 / m.bpm / sub;
     m.tick++;
     if(counting){ m.countLeft--; if(m.countLeft === 0) m.tick = 0; }
@@ -60,16 +72,17 @@ function draw(){
   if(!m.running) return;
   var t = now(), cur = null;
   while(m.queue.length && m.queue[0].time <= t){ cur = m.queue.shift(); }
-  if(cur) m.beatFns.forEach(function(fn){ fn(cur.beat, cur.count); });
+  if(cur) m.beatFns.forEach(function(fn){ fn(cur.beat, cur.count, cur.silent); });
   requestAnimationFrame(draw);
 }
 
-/* start({countIn:n, onReady:fn}) – onReady fires when the count-in bar is over (first real downbeat) */
+/* start({countIn:n, onReady:fn, gap:bool}) – onReady fires when the count-in bar is over (first real downbeat);
+   gap:true applies the saved gap setting (practice routine only, never the measurement) */
 m.start = function(opts){
   opts = opts || {};
   ensureAudio();
   if(m.running) m.stop(true);
-  m.running = true; m.tick = 0; m.queue = []; m.gen++;
+  m.running = true; m.tick = 0; m.queue = []; m.gen++; m.bar = -1; m.gapOn = !!opts.gap;
   m.countLeft = opts.countIn || 0;
   m.next = now() + 0.06;
   m.timer = setInterval(scheduler, TICK_MS); scheduler();
@@ -85,17 +98,18 @@ m.start = function(opts){
 m.stop = function(quiet){
   if(!m.running) return;
   m.running = false; clearInterval(m.timer); m.timer = null; m.queue = []; m.gen++;
-  m.beatFns.forEach(function(fn){ fn(-1, false); });
+  m.beatFns.forEach(function(fn){ fn(-1, false, false); });
   if(!quiet) m.log.push({ev:"stop"});
   emitState();
 };
 m.setBpm = function(v){
   m.bpm = RT.clampBpm(v);
-  RT.writeJSON(RT.KEYS.metro, {bpm:m.bpm});
+  saveMetro();
   emitState();
   return m.bpm;
 };
 m.setSub = function(v){ v=+v; if([1,2,3,4].indexOf(v)<0) v=1; if(m.sub!==v){ m.sub=v; if(m.countLeft===0) m.tick=0; } };
+m.setGap = function(g){ m.gap = normGap(Object.assign({}, m.gap, g)); saveMetro(); emitState(); return m.gap; };
 m.onBeat = function(fn){ m.beatFns.push(fn); };
 var stateFns = [];
 m.onState = function(fn){ stateFns.push(fn); };
