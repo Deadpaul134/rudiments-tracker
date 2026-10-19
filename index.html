@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f0e8">
+<title>מעקב רודימנטים</title>
+<script>
+/* apply the theme before first paint: saved choice, else follow the system */
+(function(){ try{ var t=localStorage.getItem("rimon-rudiments-v1-theme"); t=t?JSON.parse(t):"system";
+  var dark = t==="dark" || (t!=="light" && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.setAttribute("data-theme", dark?"dark":"light"); }catch(e){ document.documentElement.setAttribute("data-theme","light"); } })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app">
+
+<aside class="side" aria-label="ניווט ראשי">
+  <div class="brand" aria-hidden="true">
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><ellipse cx="16" cy="20" rx="11" ry="4.5"/><path d="M5 20v-2.5c0-2.5 4.9-4.5 11-4.5s11 2 11 4.5V20"/><path d="M9 4l7 11M23 4l-7 11"/></svg>
+  </div>
+  <nav class="nav">
+    <a href="#home" class="nav-i" data-route="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>בית</span></a>
+    <a href="#practice" class="nav-i" data-route="practice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v7c0 1.7 3.6 3 8 3s8-1.3 8-3V9"/><path d="M8 12v6M16 12v6M12 12.5v6"/></svg><span>תרגול</span></a>
+    <a href="#progress" class="nav-i" data-route="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>התקדמות</span></a>
+    <a href="#library" class="nav-i" data-route="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg><span>ספרייה</span></a>
+  </nav>
+  <div class="side-foot">
+    <a href="#settings" class="nav-i" data-route="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>הגדרות</span><i class="sync-dot" data-sync-dot aria-hidden="true"></i></a>
+    <button type="button" class="theme-btn" id="themeBtn" aria-label="החלף ערכת צבעים" title="בהיר / כהה">
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </div>
+</aside>
+
+<main class="main" id="main">
+
+<!-- ================= בית ================= -->
+<section class="screen" id="screen-home" data-screen="home" aria-labelledby="homeTitle">
+  <header class="hello">
+    <div>
+      <h1 id="homeTitle">שלום <span aria-hidden="true">👋</span></h1>
+      <p class="lead">מוכנים לתרגול של היום?</p>
+      <p class="pill-line"><i class="dot"></i><span id="homePlanLine"></span></p>
+    </div>
+  </header>
+  <div class="note warn" id="fixBar" hidden>
+    <span class="fx-t" id="fixText"></span>
+    <span class="fx-a"><button type="button" class="btn primary sm" id="fixApply">תקן עכשיו</button><button type="button" class="btn sm" id="fixLater">לא עכשיו</button></span>
+  </div>
+  <div class="home-grid">
+    <div class="col">
+      <div class="card hero">
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="52"/><circle class="prog" id="homeRing" cx="60" cy="60" r="52"/></svg>
+          <div class="ring-c"><div class="ring-n" id="homeRingN">0/5</div><div class="ring-l">שלבים היום</div></div>
+        </div>
+        <div class="hero-side">
+          <button type="button" class="btn primary xl" id="startToday"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>התחל תרגול של היום</button>
+          <div class="hero-sub" id="heroSub"></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-v" id="stStreak">0</div><div class="stat-l">ימי רצף <span aria-hidden="true">🔥</span></div></div>
+        <div class="stat"><div class="stat-v" id="stWeek">0/7</div><div class="stat-l">ימי תרגול השבוע</div></div>
+        <div class="stat"><div class="stat-v" id="stLeft">—</div><div class="stat-l">ימים ליעד 30.10</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2><i class="dot"></i>התוכנית של היום</h2><span class="muted" id="planMeta"></span></div>
+        <ol class="plan-list" id="todayPlan"></ol>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <div class="card-h"><h2><i class="dot"></i>השבוע</h2>
+          <div class="wk-nav"><button type="button" class="ib" id="wkPrev" aria-label="השבוע הקודם">›</button><span id="wkRange"></span><button type="button" class="ib" id="wkNext" aria-label="השבוע הבא">‹</button></div>
+        </div>
+        <div class="week" id="week" role="group" aria-label="ימי תרגול בשבוע"></div>
+        <div class="muted small" id="wkFoot"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2><i class="dot"></i>יעדים עד 30.10</h2><a href="#progress" class="link">לכל ההתקדמות</a></div>
+        <div class="goals-mini" id="homeGoals"></div>
+      </div>
+      <div class="card measure-cta" id="homeMeasure">
+        <div class="card-h"><h2><i class="dot"></i>מדידה שבועית</h2><span class="tag" id="measureTag"></span></div>
+        <p class="muted" id="measureText"></p>
+        <a href="#measure" class="btn">למדידה השבועית</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= תרגול ================= -->
+<section class="screen" id="screen-practice" data-screen="practice" aria-labelledby="practiceTitle" hidden>
+  <header class="scr-h">
+    <h1 id="practiceTitle">תרגול</h1>
+    <div class="seg big" role="tablist"><a href="#practice" class="on" role="tab" aria-selected="true">שגרה יומית</a><a href="#measure" role="tab" aria-selected="false">מדידה שבועית</a></div>
+  </header>
+  <div class="practice-grid">
+    <div class="card stage" id="stage" data-phase="idle">
+      <div class="stage-top">
+        <span class="pill" data-p="stepn"></span>
+        <span class="phase" data-p="phase"></span>
+        <button type="button" class="btn sm ghost" id="focusBtn" title="מצב מיקוד (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>מסך מלא</button>
+      </div>
+      <h2 class="stage-name" data-p="name"></h2>
+      <div class="stage-desc muted" data-p="desc"></div>
+      <div class="stage-stick" data-p="stick"></div>
+      <div class="bpm-row">
+        <button type="button" class="bpm-adj" data-adj="-5" aria-label="הורד 5 BPM">−5</button>
+        <button type="button" class="bpm-adj" data-adj="-1" aria-label="הורד BPM">−1</button>
+        <div class="bpm"><div class="bpm-n" data-p="bpm" id="stageBpm">0</div><div class="bpm-u">BPM · <span data-p="sub"></span></div></div>
+        <button type="button" class="bpm-adj" data-adj="1" aria-label="הוסף BPM">+1</button>
+        <button type="button" class="bpm-adj" data-adj="5" aria-label="הוסף 5 BPM">+5</button>
+      </div>
+      <div class="beats" data-beats></div>
+      <div class="tline"><div class="tline-bar"><i data-p="bar"></i></div><div class="tline-t"><span data-p="left"></span><span class="muted" data-p="total"></span></div></div>
+      <div class="rest" id="restPanel" hidden>
+        <div class="rest-q">איך היה <b data-p="restname"></b>?</div>
+        <div class="rate-row">
+          <button type="button" class="rate r-clean" data-rate="clean"><b>נקי</b><small>1</small></button>
+          <button type="button" class="rate r-ok" data-rate="ok"><b>סביר</b><small>2</small></button>
+          <button type="button" class="rate r-broke" data-rate="broke"><b>נשבר</b><small>3</small></button>
+        </div>
+        <div class="rest-next"><span class="muted">הבא בעוד <b data-p="restleft"></b>:</span> <b data-p="nextname"></b> <span class="muted" data-p="nextmeta"></span></div>
+      </div>
+      <div class="done-panel" id="donePanel" hidden></div>
+      <div class="ctl-row">
+        <button type="button" class="ctl" id="pPrev" aria-label="שלב קודם" title="שלב קודם (→)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM9.5 12l9.5 7V5z" transform="matrix(-1 0 0 1 24 0)"/></svg></button>
+        <button type="button" class="play" id="pPlay" aria-label="התחל / השהה" title="התחל / השהה (רווח)"><svg viewBox="0 0 24 24" fill="currentColor" data-p="playicon"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg></button>
+        <button type="button" class="ctl" id="pNext" aria-label="שלב הבא" title="שלב הבא (←)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM9.5 12l9.5 7V5z"/></svg></button>
+        <button type="button" class="btn sm ghost" id="pStop">סיים שגרה</button>
+      </div>
+      <div class="keys muted small" aria-label="קיצורי מקלדת">
+        <span><kbd>רווח</kbd> התחל/השהה</span><span><kbd>↑</kbd><kbd>↓</kbd> טמפו ±1 (<kbd>Shift</kbd> ±5)</span><span><kbd>→</kbd><kbd>←</kbd> שלב קודם/הבא</span><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> דירוג</span><span><kbd>F</kbd> מיקוד</span><span><kbd>Esc</kbd> יציאה</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2><i class="dot"></i>שלבי השגרה</h2><span class="muted" id="routineMeta"></span></div>
+      <ol class="steps" id="pSteps"></ol>
+      <p class="muted small">לחיצה על שלב בוחרת ממנו להתחיל. הקצבים נקבעים רק על ידך – בחצים או בעורך השגרה בהגדרות.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= מדידה שבועית ================= -->
+<section class="screen" id="screen-measure" data-screen="measure" aria-labelledby="measureTitle" hidden>
+  <header class="scr-h">
+    <h1 id="measureTitle">מדידה שבועית</h1>
+    <div class="seg big" role="tablist"><a href="#practice" role="tab" aria-selected="false">שגרה יומית</a><a href="#measure" class="on" role="tab" aria-selected="true">מדידה שבועית</a></div>
+  </header>
+  <div class="practice-grid">
+    <div class="card stage" id="mStage" data-phase="setup">
+      <div class="m-setup" id="mSetup">
+        <div class="queue-line" id="mQueueLine" hidden></div>
+        <label class="fld"><span>תרגיל / תת-תרגיל</span><select id="mSub" class="tin"></select></label>
+        <div class="m-last muted" id="mLast"></div>
+        <div class="fld-row">
+          <label class="fld"><span>טמפו התחלה</span><input type="number" id="mStart" class="tin num" min="30" max="300" inputmode="numeric"></label>
+          <label class="fld"><span>עלייה (BPM)</span><input type="number" id="mStep" class="tin num" min="1" max="30" inputmode="numeric"></label>
+          <label class="fld"><span>כל (שניות)</span><input type="number" id="mEvery" class="tin num" min="5" max="300" inputmode="numeric"></label>
+        </div>
+        <label class="fld" id="mSubdivWrap" hidden><span>חלוקה (חשוב להשוואת ימין/שמאל)</span><select id="mSubdiv" class="tin"><option value="">לא צוין</option><option>רבעים</option><option>שמיניות</option><option>שש-עשריות</option><option>טריולות</option></select></label>
+        <div class="row gap">
+          <button type="button" class="btn primary lg" id="mGo">התחל מדידה</button>
+          <button type="button" class="btn lg" id="mSkip" hidden>דלג לתרגיל הבא</button>
+          <button type="button" class="btn lg ghost" id="mQuit" hidden>סיים רשימה</button>
+        </div>
+        <p class="muted small">ברירת המחדל: המקסימום הנקי האחרון פחות 20. הטמפו עולה אוטומטית; לוחצים פעם אחת כשנהיה <b>קשה</b> ופעם שנייה כשזה <b>נשבר</b>.</p>
+      </div>
+      <div class="m-run" id="mRun" hidden>
+        <div class="stage-top"><span class="pill" id="mRunPill"></span><span class="phase" id="mPhase"></span></div>
+        <h2 class="stage-name" id="mName"></h2>
+        <div class="stage-stick" id="mStick"></div>
+        <div class="bpm"><div class="bpm-n" id="mBpm">0</div><div class="bpm-u">BPM</div></div>
+        <div class="beats" data-beats></div>
+        <div class="tline"><div class="tline-bar"><i id="mBar"></i></div><div class="tline-t"><span id="mLevelLeft"></span><span class="muted" id="mNextBpm"></span></div></div>
+        <div class="m-marks" id="mMarks"></div>
+        <button type="button" class="btn primary xl mark" id="mMark">קשה</button>
+        <div class="row gap center"><button type="button" class="btn ghost" id="mCancel">בטל מדידה</button></div>
+        <div class="keys muted small"><span><kbd>רווח</kbd> סימון קשה / נשבר</span><span><kbd>Esc</kbd> ביטול</span></div>
+      </div>
+      <div class="m-result" id="mResult" hidden>
+        <h2 class="stage-name" id="mResName"></h2>
+        <p class="muted">אפשר לתקן את הערכים לפני השמירה. נשמר כ<b>מקסימום נקי</b> (מדידה).</p>
+        <div class="fld-row">
+          <label class="fld"><span>BPM נקי אחרון</span><input type="number" id="mResClean" class="tin num" min="20" max="400"></label>
+          <label class="fld"><span>BPM קשה</span><input type="number" id="mResHard" class="tin num" min="20" max="400"></label>
+          <label class="fld"><span>BPM נשבר</span><input type="number" id="mResBreak" class="tin num" min="20" max="400"></label>
+        </div>
+        <label class="fld" id="mResSubdivWrap" hidden><span>חלוקה</span><select id="mResSubdiv" class="tin"><option value="">לא צוין</option><option>רבעים</option><option>שמיניות</option><option>שש-עשריות</option><option>טריולות</option></select></label>
+        <label class="fld"><span>הערות</span><input type="text" id="mResNotes" class="tin" maxlength="200" placeholder="מה נשבר, תחושה…"></label>
+        <div class="row gap">
+          <button type="button" class="btn primary lg" id="mSave">שמור מדידה</button>
+          <button type="button" class="btn lg" id="mRetry">מדוד שוב</button>
+          <button type="button" class="btn lg ghost" id="mDiscard">בטל</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2><i class="dot"></i>רשימת המדידה השבועית</h2><span class="muted" id="weeklyMeta"></span></div>
+      <ol class="steps" id="weeklyList"></ol>
+      <button type="button" class="btn primary" id="mRunAll">הרץ את כל הרשימה ברצף</button>
+      <p class="muted small">את הרשימה עורכים בהגדרות.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= התקדמות ================= -->
+<section class="screen" id="screen-progress" data-screen="progress" aria-labelledby="progressTitle" hidden>
+  <header class="scr-h">
+    <h1 id="progressTitle">התקדמות</h1>
+    <button type="button" class="btn" id="copySummary">העתק סיכום למאסטרו</button>
+  </header>
+  <div class="goals" id="goals"></div>
+  <div class="prog-grid">
+    <div class="card">
+      <div class="card-h"><h2><i class="dot"></i>גרף לפי תרגיל</h2></div>
+      <div class="row gap wrap">
+        <select id="pgEx" class="tin" aria-label="תרגיל"></select>
+      </div>
+      <div class="subchips" id="pgSubs" role="tablist" aria-label="תתי-תרגילים"></div>
+      <div class="chart big" id="pgChart"></div>
+      <div class="legend"><span><i class="lg-clean"></i>מקסימום נקי</span><span><i class="lg-hard"></i>קשה</span><span><i class="lg-work"></i>טמפו עבודה (צבע לפי דירוג)</span></div>
+      <h3 class="h3">היסטוריה</h3>
+      <ul class="hist" id="pgHist"></ul>
+    </div>
+    <div class="col">
+      <div class="card" id="handCard">
+        <div class="card-h"><h2><i class="dot"></i>ימין מול שמאל</h2></div>
+        <div id="handBody"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2><i class="dot"></i>כל מה שנמדד</h2></div>
+        <div class="minis" id="pgMinis"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ספרייה ================= -->
+<section class="screen" id="screen-library" data-screen="library" aria-labelledby="libraryTitle" hidden>
+  <header class="scr-h">
+    <h1 id="libraryTitle">ספרייה</h1>
+    <button type="button" class="btn primary" id="addEx">+ תרגיל חדש</button>
+  </header>
+  <nav class="cats" id="cats" role="tablist" aria-label="קטגוריות"></nav>
+  <div class="lib-grid" id="libGrid"></div>
+</section>
+
+<!-- ================= הגדרות ================= -->
+<section class="screen" id="screen-settings" data-screen="settings" aria-labelledby="settingsTitle" hidden>
+  <header class="scr-h"><h1 id="settingsTitle">הגדרות</h1></header>
+  <div class="set-grid">
+    <div class="col">
+      <div class="card">
+        <div class="card-h"><h2><i class="dot"></i>מראה</h2></div>
+        <div class="seg" id="themeSeg" role="radiogroup" aria-label="ערכת צבעים">
+          <button type="button" data-theme-v="system" role="radio">לפי המערכת</button><button type="button" data-theme-v="light" role="radio">בהיר</button><button type="button" data-theme-v="dark" role="radio">כהה</button>
+        </div>
+      </div>
+      <div class="card" id="syncCard">
+        <div class="card-h"><h2><i class="sync-dot" data-sync-dot></i>סנכרון לגוגל שיטס</h2></div>
+        <div class="sync-st small" id="syncStatus" role="status"></div>
+        <label class="fld"><span>כתובת ה-Web App</span><input type="url" class="tin" id="syncUrl" dir="ltr" spellcheck="false" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec"></label>
+        <div class="row gap wrap">
+          <button type="button" class="btn" id="syncSave">שמור כתובת</button>
+          <button type="button" class="btn" id="syncTest">בדוק חיבור</button>
+          <button type="button" class="btn primary" id="syncAll">סנכרן הכל עכשיו</button>
+          <a class="link" id="syncSheetLink" href="#" target="_blank" rel="noopener" hidden>פתח את הגיליון ↗</a>
+        </div>
+        <p class="muted small">כל מדידה, טמפו עבודה עם דירוג וסוף שגרה נשלחים לגיליון אוטומטית. בלי אינטרנט הכל נשמר בתור ונשלח כשהחיבור חוזר. „סנכרן הכל” כותב מחדש את כל ההיסטוריה. הוראות התקנה בקובץ ההוראות בתיקיית הסנכרון במאגר.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2><i class="dot"></i>ייבוא וייצוא</h2></div>
+        <div class="row gap wrap">
+          <button type="button" class="btn" id="exportBtn">ייצוא נתונים</button>
+          <button type="button" class="btn" id="importBtn">ייבוא קובץ</button>
+          <button type="button" class="btn" id="copySummary2">העתק סיכום</button>
+          <input type="file" id="importFile" accept=".json,application/json" class="sr">
+        </div>
+        <p class="muted small">מקבל קבצי ייצוא מגרסה 1 ומגרסה 2. הנתונים נשמרים בדפדפן הזה – מומלץ לייצא מדי פעם לגיבוי.</p>
+        <p class="muted small" id="migInfo"></p>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2><i class="dot"></i>תרגול ומדידה</h2></div>
+        <div class="fld-row">
+          <label class="fld"><span>מנוחה בין שלבים (שניות)</span><input type="number" class="tin num" id="setRest" min="3" max="120"></label>
+          <label class="fld"><span>מדידה: התחלה מתחת למקס</span><input type="number" class="tin num" id="setMStart" min="0" max="100"></label>
+        </div>
+        <div class="fld-row">
+          <label class="fld"><span>מדידה: עלייה (BPM)</span><input type="number" class="tin num" id="setMStep" min="1" max="30"></label>
+          <label class="fld"><span>מדידה: כל (שניות)</span><input type="number" class="tin num" id="setMEvery" min="5" max="300"></label>
+        </div>
+        <label class="sw"><input type="checkbox" id="setSubClicks"><span class="knob" aria-hidden="true"></span>השמע קליקים של החלוקה (שמיניות / טריולות / שש-עשריות)</label>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <div class="card-h"><h2><i class="dot"></i>עורך השגרה</h2><span class="muted" id="edMeta"></span></div>
+        <div class="editor" id="routineEditor"></div>
+        <div class="row gap wrap">
+          <button type="button" class="btn" id="edAdd">+ הוסף שלב</button>
+          <button type="button" class="btn ghost" id="edReset">חזרה לשגרת ברירת המחדל</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2><i class="dot"></i>רשימת המדידה השבועית</h2></div>
+        <ol class="steps compact" id="weeklyEditor"></ol>
+        <div class="row gap"><select class="tin" id="weeklyAddSel" aria-label="תת-תרגיל להוספה"></select><button type="button" class="btn" id="weeklyAdd">הוסף</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- ================= מצב מיקוד ================= -->
+<div class="focus" id="focus" hidden role="dialog" aria-modal="true" aria-label="מצב מיקוד">
+  <div class="focus-top"><span class="focus-lbl">מיקוד · <span data-p="stepn"></span></span><button type="button" class="ib big" id="focusExit" aria-label="יציאה ממצב מיקוד (Esc)">✕</button></div>
+  <div class="focus-body">
+    <div class="focus-phase" data-p="phase"></div>
+    <h2 class="focus-name" data-p="name"></h2>
+    <div class="focus-bpm" data-p="bpm">0</div>
+    <div class="focus-u">BPM</div>
+    <div class="tline focus-line"><div class="tline-bar"><i data-p="bar"></i></div><div class="tline-t"><span data-p="left"></span></div></div>
+    <div class="beats big" data-beats></div>
+    <div class="focus-rest" data-show="rest" hidden>
+      <div class="rate-row">
+        <button type="button" class="rate r-clean" data-rate="clean"><b>נקי</b><small>1</small></button>
+        <button type="button" class="rate r-ok" data-rate="ok"><b>סביר</b><small>2</small></button>
+        <button type="button" class="rate r-broke" data-rate="broke"><b>נשבר</b><small>3</small></button>
+      </div>
+      <div class="rest-next">הבא בעוד <b data-p="restleft"></b>: <b data-p="nextname"></b></div>
+    </div>
+    <button type="button" class="play big" id="fPlay" aria-label="התחל / השהה"><svg viewBox="0 0 24 24" fill="currentColor" data-p="playicon"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg></button>
+    <div class="focus-stick" data-p="stick"></div>
+  </div>
+</div>
+
+<!-- dialog -->
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-box">
+    <h2 id="modalTitle"></h2>
+    <div id="modalBody"></div>
+    <div class="row gap wrap" id="modalBtns"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/data.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/practice.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
