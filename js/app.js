@@ -528,6 +528,19 @@ $("pPrev").addEventListener("click",function(){ RT.practice.prev(); });
 $("pStop").addEventListener("click",function(){ RT.practice.stop(); });
 document.querySelectorAll("[data-adj]").forEach(function(b){ b.addEventListener("click",function(){ RT.practice.adjust(+b.dataset.adj); }); });
 document.querySelectorAll("[data-rate]").forEach(function(b){ b.addEventListener("click",function(){ RT.practice.rate(b.dataset.rate); }); });
+document.querySelectorAll("[data-raise]").forEach(function(b){ b.addEventListener("click",function(){ RT.practice.raise(b.dataset.raise==="accept"); }); });
+/* gap metronome toggle (practice screen) */
+function renderGap(){
+  var g=RT.metro.gap;
+  $("gapOn").checked=g.on; $("gapPlay").value=g.play; $("gapMute").value=g.mute;
+  $("gapNums").classList.toggle("off",!g.on);
+}
+$("gapOn").addEventListener("change",function(){ RT.metro.setGap({on:$("gapOn").checked}); renderGap(); this.blur(); });
+["gapPlay","gapMute"].forEach(function(id){
+  $(id).addEventListener("change",function(){ var o={}; o[id==="gapPlay"?"play":"mute"]=$(id).value; RT.metro.setGap(o); renderGap(); });
+});
+renderGap();
+RT.recorder.init();
 function focusOpen(){ return !$("focus").hidden; }
 function setFocus(on){
   $("focus").hidden=!on;
@@ -582,9 +595,11 @@ window.__rt = {
   plan:function(){ return JSON.parse(JSON.stringify(RT.plan)); },
   P:function(){ return JSON.parse(JSON.stringify({phase:P.phase,idx:P.idx,paused:P.paused,restIdx:P.restIdx,done:P.done,skipped:P.skipped,results:Object.keys(P.results).reduce(function(o,k){ o[k]={bpm:P.results[k].bpm,rating:P.results[k].rating||null}; return o; },{})})); },
   M:function(){ return {phase:M.phase,bpm:M.bpm,start:M.start,hard:M.hard,brk:M.brk,sub:M.sub,queue:M.queue,qi:M.qi}; },
-  metro:function(){ return {bpm:RT.metro.bpm,running:RT.metro.running,sub:RT.metro.sub,log:RT.metro.log.slice()}; },
+  metro:function(){ return {bpm:RT.metro.bpm,running:RT.metro.running,sub:RT.metro.sub,gap:Object.assign({},RT.metro.gap),log:RT.metro.log.slice()}; },
   sync:function(){ var S=RT.sync.state(); return JSON.parse(JSON.stringify({url:S.url,queue:S.queue,lastOk:S.lastOk,lastErr:S.lastErr,status:RT.sync.status()})); },
   syncFlush:function(){ return RT.sync.flush(); },
+  ui:function(){ return JSON.parse(JSON.stringify(RT.ui)); },
+  rec:function(){ return RT.recorder.state(); },
   handGap:RT.handGap, summary:RT.buildTextSummary, wake:function(){ return RT.wake.mode; }
 };
 })();

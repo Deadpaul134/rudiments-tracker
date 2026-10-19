@@ -53,7 +53,7 @@ function startCount(){
   var s=R()[P.idx];
   P.phase="countin"; P.paused=false; P.count=RT.settings.countIn||4;
   metro.setBpm(s.bpm); metro.setSub(s.sub);
-  metro.start({countIn:RT.settings.countIn||4, onReady:beginPlay});
+  metro.start({countIn:RT.settings.countIn||4, onReady:beginPlay, gap:true});
   RT.keepAwake(true);
   render();
 }
@@ -96,6 +96,15 @@ function rate(r){
     else res.entry=RT.logWork(link,res.bpm,r,"מהשגרה: "+R()[i].title);
     RT.toast("נרשם: "+RT.fullName(link)+" · "+res.bpm+" BPM‏ · "+RT.RATINGS[r]+" (טמפו עבודה)");
   } else RT.toast("הדירוג נשמר בסשן (השלב לא מקושר לתרגיל)");
+  render(); renderSteps();
+  return true;
+}
+// +4 BPM suggestion after a clean streak: one tap raises the rated step's target, or dismisses it for this BPM
+function raise(accept){
+  if(P.phase!=="rest") return false;
+  var i=P.restIdx, sg=RT.raiseSuggestion(i); if(!sg) return false;
+  if(accept){ RT.setStepBpm(i,sg.to); RT.toast("היעד עודכן: "+R()[i].title+" · "+sg.from+" ← "+sg.to+" BPM"); }
+  else RT.dismissRaise(sg.link,sg.from);
   render(); renderSteps();
   return true;
 }
@@ -219,6 +228,12 @@ function render(){
     setP("nextmeta", nx ? "· "+nx.bpm+" BPM‏ · "+nx.min+" דק'" : "");
     document.querySelectorAll("[data-rate]").forEach(function(b){ b.classList.toggle("on", b.dataset.rate===r); b.setAttribute("aria-pressed",String(b.dataset.rate===r)); });
   }
+  var sg=rest ? RT.raiseSuggestion(P.restIdx) : null;
+  document.querySelectorAll("[data-raise-box]").forEach(function(n){ n.hidden=!sg; });
+  if(sg){
+    setP("raisetxt", RT.RAISE_AFTER+" פעמים ברצף נקי ב-"+sg.from+" BPM‏. להעלות את היעד?");
+    setP("raiseto", "העלה ל-"+sg.to);
+  }
   var dp=document.getElementById("donePanel");
   dp.hidden=P.phase!=="done";
   if(P.phase==="done"){
@@ -270,16 +285,17 @@ function renderSteps(){
   });
   var meta=document.getElementById("routineMeta"); if(meta) meta.textContent=steps.length+" שלבים · "+RT.routineMinutes()+" דק'";
 }
-metro.onBeat(function(beat,count){
+metro.onBeat(function(beat,count,silent){
   if(count && beat>=0 && P.phase==="countin"){ P.count=Math.max(1,(RT.settings.countIn||4)-beat); }
   document.querySelectorAll("[data-beats]").forEach(function(box){
     if(box.children.length!==4){ box.innerHTML='<i></i><i></i><i></i><i></i>'; }
+    box.classList.toggle("mute",!!silent);
     [].forEach.call(box.children,function(d,i){ d.classList.toggle("on",i===beat); d.classList.toggle("first",i===0); d.classList.toggle("count",!!count); });
   });
   if(beat>=0 && count) setP("phase","ספירה… "+((RT.settings.countIn||4)-beat));
 });
 
-RT.practice = {start:start, togglePause:togglePause, next:next, prev:prev, rate:rate, stop:stop, adjust:adjust, render:render, renderSteps:renderSteps,
+RT.practice = {start:start, togglePause:togglePause, next:next, prev:prev, rate:rate, raise:raise, stop:stop, adjust:adjust, render:render, renderSteps:renderSteps,
   goStep:goStep, active:function(){ return P.phase!=="idle" && P.phase!=="done"; }};
 
 /* ======================= weekly measurement ======================= */

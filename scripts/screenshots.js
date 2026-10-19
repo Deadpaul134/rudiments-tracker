@@ -25,6 +25,9 @@ async function shoot(browser, view, theme) {
   entries.flamL.push({ date: '2026-10-18T09:00:00.000Z', kind: 'work', work: 85, clean: null, hard: null, broke: [], notes: '', rating: 'ok' });
   entries.flamL.push({ date: '2026-10-18T19:00:00.000Z', clean: 125, hard: 135, broke: [], notes: '', breakBpm: 140, src: 'measure' });
   entries.drag.push({ date: '2026-10-18T09:20:00.000Z', kind: 'work', work: 72, clean: null, hard: null, broke: [], notes: '', rating: 'clean' });
+  // two clean takes at the step-3 tempo → rating it clean once more shows the +4 BPM suggestion
+  entries.d_acc2.push({ date: '2026-10-17T09:30:00.000Z', kind: 'work', work: 110, clean: null, hard: null, broke: [], notes: '', rating: 'clean' });
+  entries.d_acc2.push({ date: '2026-10-18T09:30:00.000Z', kind: 'work', work: 110, clean: null, hard: null, broke: [], notes: '', rating: 'clean' });
   entries.double8.push({ date: '2026-10-18T19:10:00.000Z', clean: 170, hard: 180, broke: [], notes: '', breakBpm: 185, src: 'measure' });
   const plan = JSON.parse(JSON.stringify(data.plan));
   plan.days['2026-10-17'] = 1; plan.days['2026-10-18'] = 1;
@@ -38,6 +41,16 @@ async function shoot(browser, view, theme) {
     localStorage.setItem(K + '-v2meta', JSON.stringify({ migrated: true, at: '2026-10-19T07:00:00.000Z', fromV1: true }));
     sessionStorage.setItem('__seeded', '1');
   }, { K, entries, plan, theme });
+
+  // fake microphone so the recorder can be shown (nothing is captured)
+  await page.addInitScript(() => {
+    const md = navigator.mediaDevices || {};
+    md.getUserMedia = () => Promise.resolve({ getTracks: () => [{ stop() {} }] });
+    if (!navigator.mediaDevices) Object.defineProperty(navigator, 'mediaDevices', { value: md });
+    window.MediaRecorder = class { constructor() { this.mimeType = 'audio/webm'; this.state = 'inactive'; }
+      static isTypeSupported() { return true; } start() { this.state = 'recording'; }
+      stop() { this.state = 'inactive'; setTimeout(() => { this.ondataavailable({ data: new Blob(['x']) }); this.onstop(); }, 0); } };
+  });
 
   const file = (n) => path.join(OUT, `${n}-${theme}-${view.name}.png`);
   const go = async (hash) => { await page.goto(URL + '#' + hash); await page.waitForFunction(() => !!window.__rt); await page.evaluate(() => document.fonts && document.fonts.ready); await page.waitForTimeout(250); };
@@ -57,7 +70,24 @@ async function shoot(browser, view, theme) {
   // rest + rating prompt
   await page.clock.fastForward(6 * 60000);
   await snap('04-practice-rating');
+  // third clean in a row at this tempo → one-tap +4 BPM suggestion
+  await page.click('#restPanel [data-rate="clean"]');
+  await snap('09-practice-raise');
   await page.evaluate(() => window.RT.practice.stop());
+
+  // recorder (recording, with countdown) + gap metronome switched on
+  await go('practice');
+  await page.locator('#gapTool .sw').click();
+  await page.evaluate(() => window.RT.practice.start(0));
+  await page.clock.fastForward(2300);
+  await page.clock.fastForward(20000);
+  await page.click('#recBtn');
+  await page.clock.runFor(7000);
+  await snap('10-practice-tools');
+  await page.click('#recBtn');
+  await page.clock.runFor(200);
+  await snap('11-practice-playback');
+  await page.evaluate(() => { window.RT.practice.stop(); window.RT.metro.setGap({ on: false }); });
 
   await go('measure');
   await page.selectOption('#mSub', 'flamL');

@@ -207,7 +207,7 @@ RT.routineFromV1 = routineFromV1;
 
 RT.state = loadState();
 RT.plan = normPlan(readJSON(KEYS.plan, {}));
-RT.ui = (function(){ var u=readJSON(KEYS.ui,{}); if(!isObj(u)) u={}; if(!isObj(u.open)) u.open={}; if(!isObj(u.tab)) u.tab={}; if(!u.cat) u.cat="rud"; return u; })();
+RT.ui = (function(){ var u=readJSON(KEYS.ui,{}); if(!isObj(u)) u={}; if(!isObj(u.open)) u.open={}; if(!isObj(u.tab)) u.tab={}; if(!u.cat) u.cat="rud"; if(!isObj(u.raiseOff)) u.raiseOff={}; return u; })();
 RT.settings = Object.assign({}, DEFAULT_SETTINGS, (function(){ var s=readJSON(KEYS.settings,{}); return isObj(s)?s:{}; })());
 
 /* one-time v1 → v2 migration of localStorage (backup of every v1 key, routine conversion) */
@@ -273,6 +273,27 @@ RT.logWork=function(id,bpm,rating,notes){
   if(rating) o.rating=rating;
   return RT.addEntry(id,o);
 };
+
+/* ---------- clean streak → optional +4 BPM target suggestion (only ever applied by the user) ---------- */
+var RAISE_AFTER=3, RAISE_BY=4;
+RT.RAISE_AFTER=RAISE_AFTER; RT.RAISE_BY=RAISE_BY;
+// consecutive "clean" ratings at this BPM, newest first; unrated work entries and max measurements don't break it
+RT.cleanStreak=function(id,bpm){
+  var e=entries(id), n=0;
+  for(var i=e.length-1;i>=0;i--){
+    var x=e[i]; if(!isWork(x) || !x.rating) continue;
+    if(x.rating!=="clean" || +x.work!==+bpm) break;
+    n++;
+  }
+  return n;
+};
+RT.raiseSuggestion=function(i){
+  var s=RT.plan.routine2[i], link=RT.stepLink(i);
+  if(!s || !link || s.bpm+RAISE_BY>300) return null;
+  if(RT.ui.raiseOff[link+"@"+s.bpm]) return null;
+  return RT.cleanStreak(link,s.bpm)>=RAISE_AFTER ? {link:link, from:s.bpm, to:s.bpm+RAISE_BY} : null;
+};
+RT.dismissRaise=function(link,bpm){ RT.ui.raiseOff[link+"@"+bpm]=1; RT.saveUi(); };
 
 /* ---------- routine ---------- */
 RT.routine=function(){ return RT.plan.routine2; };

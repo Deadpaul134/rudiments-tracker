@@ -128,6 +128,7 @@
           <button type="button" class="rate r-ok" data-rate="ok"><b>סביר</b><small>2</small></button>
           <button type="button" class="rate r-broke" data-rate="broke"><b>נשבר</b><small>3</small></button>
         </div>
+        <div class="raise" data-raise-box hidden><span data-p="raisetxt"></span><span class="raise-a"><button type="button" class="btn primary sm" data-raise="accept" data-p="raiseto"></button><button type="button" class="btn sm ghost" data-raise="dismiss">לא עכשיו</button></span></div>
         <div class="rest-next"><span class="muted">הבא בעוד <b data-p="restleft"></b>:</span> <b data-p="nextname"></b> <span class="muted" data-p="nextmeta"></span></div>
       </div>
       <div class="done-panel" id="donePanel" hidden></div>
@@ -136,6 +137,19 @@
         <button type="button" class="play" id="pPlay" aria-label="התחל / השהה" title="התחל / השהה (רווח)"><svg viewBox="0 0 24 24" fill="currentColor" data-p="playicon"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg></button>
         <button type="button" class="ctl" id="pNext" aria-label="שלב הבא" title="שלב הבא (←)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM9.5 12l9.5 7V5z"/></svg></button>
         <button type="button" class="btn sm ghost" id="pStop">סיים שגרה</button>
+      </div>
+      <div class="tools">
+        <div class="tool" id="gapTool">
+          <label class="sw"><input type="checkbox" id="gapOn"><span class="knob" aria-hidden="true"></span>מטרונום עם הפסקות</label>
+          <span class="gap-n" id="gapNums"><input type="number" class="tin sm num" id="gapPlay" min="1" max="16" inputmode="numeric" aria-label="תיבות עם קליק"> עם קליק · <input type="number" class="tin sm num" id="gapMute" min="1" max="16" inputmode="numeric" aria-label="תיבות בשקט"> בשקט</span>
+        </div>
+        <div class="tool" id="recTool" data-state="idle">
+          <button type="button" class="btn sm rec-btn" id="recBtn" aria-pressed="false"><i class="rec-dot" aria-hidden="true"></i><span id="recLbl">הקלטה</span></button>
+          <span class="rec-t muted small" id="recTime" aria-live="off"></span>
+          <button type="button" class="btn sm" id="recPlay" disabled><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg><span id="recPlayLbl">השמע</span></button>
+          <span class="rec-msg small" id="recMsg" role="status" hidden></span>
+          <audio id="recAudio" preload="auto" hidden></audio>
+        </div>
       </div>
       <div class="keys muted small" aria-label="קיצורי מקלדת">
         <span><kbd>רווח</kbd> התחל/השהה</span><span><kbd>↑</kbd><kbd>↓</kbd> טמפו ±1 (<kbd>Shift</kbd> ±5)</span><span><kbd>→</kbd><kbd>←</kbd> שלב קודם/הבא</span><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> דירוג</span><span><kbd>F</kbd> מיקוד</span><span><kbd>Esc</kbd> יציאה</span>
@@ -338,6 +352,7 @@
         <button type="button" class="rate r-ok" data-rate="ok"><b>סביר</b><small>2</small></button>
         <button type="button" class="rate r-broke" data-rate="broke"><b>נשבר</b><small>3</small></button>
       </div>
+      <div class="raise" data-raise-box hidden><span data-p="raisetxt"></span><span class="raise-a"><button type="button" class="btn primary sm" data-raise="accept" data-p="raiseto"></button><button type="button" class="btn sm ghost" data-raise="dismiss">לא עכשיו</button></span></div>
       <div class="rest-next">הבא בעוד <b data-p="restleft"></b>: <b data-p="nextname"></b></div>
     </div>
     <button type="button" class="play big" id="fPlay" aria-label="התחל / השהה"><svg viewBox="0 0 24 24" fill="currentColor" data-p="playicon"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg></button>
@@ -359,6 +374,7 @@
 <script src="js/audio.js"></script>
 <script src="js/sync.js"></script>
 <script src="js/practice.js"></script>
+<script src="js/recorder.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
