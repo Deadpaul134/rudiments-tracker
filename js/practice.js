@@ -99,6 +99,15 @@ function rate(r){
   render(); renderSteps();
   return true;
 }
+// +4 BPM suggestion after a clean streak: one tap raises the rated step's target, or dismisses it for this BPM
+function raise(accept){
+  if(P.phase!=="rest") return false;
+  var i=P.restIdx, sg=RT.raiseSuggestion(i); if(!sg) return false;
+  if(accept){ RT.setStepBpm(i,sg.to); RT.toast("היעד עודכן: "+R()[i].title+" · "+sg.from+" ← "+sg.to+" BPM"); }
+  else RT.dismissRaise(sg.link,sg.from);
+  render(); renderSteps();
+  return true;
+}
 function togglePause(){
   if(P.phase==="idle" || P.phase==="done"){ start(P.phase==="done"?0:P.idx); return; }
   if(!P.paused){
@@ -219,6 +228,12 @@ function render(){
     setP("nextmeta", nx ? "· "+nx.bpm+" BPM‏ · "+nx.min+" דק'" : "");
     document.querySelectorAll("[data-rate]").forEach(function(b){ b.classList.toggle("on", b.dataset.rate===r); b.setAttribute("aria-pressed",String(b.dataset.rate===r)); });
   }
+  var sg=rest ? RT.raiseSuggestion(P.restIdx) : null;
+  document.querySelectorAll("[data-raise-box]").forEach(function(n){ n.hidden=!sg; });
+  if(sg){
+    setP("raisetxt", RT.RAISE_AFTER+" פעמים ברצף נקי ב-"+sg.from+" BPM. להעלות את היעד?");
+    setP("raiseto", "העלה ל-"+sg.to);
+  }
   var dp=document.getElementById("donePanel");
   dp.hidden=P.phase!=="done";
   if(P.phase==="done"){
@@ -279,7 +294,7 @@ metro.onBeat(function(beat,count){
   if(beat>=0 && count) setP("phase","ספירה… "+((RT.settings.countIn||4)-beat));
 });
 
-RT.practice = {start:start, togglePause:togglePause, next:next, prev:prev, rate:rate, stop:stop, adjust:adjust, render:render, renderSteps:renderSteps,
+RT.practice = {start:start, togglePause:togglePause, next:next, prev:prev, rate:rate, raise:raise, stop:stop, adjust:adjust, render:render, renderSteps:renderSteps,
   goStep:goStep, active:function(){ return P.phase!=="idle" && P.phase!=="done"; }};
 
 /* ======================= weekly measurement ======================= */

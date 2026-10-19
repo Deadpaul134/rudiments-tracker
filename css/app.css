@@ -229,6 +229,10 @@ textarea.tin{min-height:70px;resize:vertical}
 .rate.r-ok:hover,.rate.r-ok.on{border-color:var(--warn);background:var(--warn-soft)}
 .rate.r-broke:hover,.rate.r-broke.on{border-color:var(--bad);background:var(--bad-soft)}
 .rest-next{font-size:15.5px}
+.raise{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;background:var(--good-soft);border:1px solid var(--good);border-radius:16px;padding:10px 14px;font-size:15.5px}
+.raise[hidden]{display:none}
+.raise-a{display:flex;gap:8px}
+.raise .btn{min-height:44px}
 .done-panel{width:100%;display:flex;flex-direction:column;gap:12px}
 .done-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;text-align:start}
 .done-list li{display:flex;gap:10px;align-items:center;padding:10px 14px;background:var(--card2);border-radius:14px}
