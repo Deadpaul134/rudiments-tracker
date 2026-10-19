@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121012">
+<title>מעקב רודימנטים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0d0f; --bg2:#151316; --card:#1b181c; --card2:#221e23; --line:#2e2930; --line2:#3a3340;
+  --text:#f3ece6; --muted:#a59b98; --dim:#6f6669;
+  --accent:#ff9f43; --accent2:#ff6b3d; --accent-soft:rgba(255,159,67,.14);
+  --good:#5fd39a; --bad:#ff6b6b; --blue:#7fb2ff;
+  --radius:20px; --shadow:0 10px 30px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.03) inset;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:"Rubik","Heebo","Segoe UI","Arial Hebrew",Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(255,140,60,.13), transparent 60%),
+    radial-gradient(900px 500px at -10% 10%, rgba(255,90,60,.07), transparent 60%),
+    var(--bg);
+  color:var(--text); min-height:100vh; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.wrap{max-width:1240px;margin:0 auto;padding:28px 22px 60px}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+
+/* Header */
+header.top{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--accent),var(--accent2));box-shadow:0 8px 24px rgba(255,120,60,.35)}
+.logo svg{width:30px;height:30px}
+h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.5px}
+.sub{color:var(--muted);font-size:14px;margin-top:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line2);background:var(--card);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:500;
+  display:inline-flex;align-items:center;gap:8px;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);background:var(--card2)}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:16px;height:16px;flex:none}
+.btn.primary{background:linear-gradient(140deg,var(--accent),var(--accent2));border-color:transparent;color:#1a0f08;font-weight:700}
+.btn.primary:hover{filter:brightness(1.08)}
+
+/* Summary */
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;inset:auto -30px -30px auto;width:110px;height:110px;border-radius:50%;background:var(--glow,rgba(255,159,67,.10));filter:blur(10px)}
+.stat .lbl{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.stat .val{font-size:22px;font-weight:700;margin-top:6px;line-height:1.25}
+.stat .meta{font-size:13px;color:var(--dim);margin-top:4px}
+.stat.good{--glow:rgba(95,211,154,.13)} .stat.good .val{color:var(--good)}
+.stat.bad{--glow:rgba(255,107,107,.13)} .stat.bad .val{color:var(--bad)}
+.stat.gap .val{color:var(--accent)}
+
+/* Metronome */
+.metro{background:linear-gradient(135deg,#231c1a,#19161a 60%);border:1px solid var(--line2);border-radius:24px;padding:20px 22px;margin-bottom:26px;box-shadow:var(--shadow);
+  display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center}
+.metro-bpm{text-align:center;min-width:130px}
+.metro-bpm .num{font-size:58px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#fff,#ffc58f);-webkit-background-clip:text;background-clip:text;color:transparent}
+.metro-bpm .unit{font-size:13px;color:var(--muted);letter-spacing:2px;margin-top:4px}
+.metro-mid{display:flex;flex-direction:column;gap:14px;min-width:0}
+.metro-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.metro .step{width:52px;height:40px;border-radius:12px;border:1px solid var(--line2);background:var(--card2);font-weight:700;font-size:15px}
+.metro .step:hover{border-color:var(--accent)}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;min-width:140px;height:8px;border-radius:99px;background:linear-gradient(to left,var(--accent) var(--p,40%),var(--line2) var(--p,40%));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:4px solid var(--accent);box-shadow:0 2px 10px rgba(0,0,0,.5)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:4px solid var(--accent)}
+.beats{display:flex;gap:10px;align-items:center}
+.beat{width:18px;height:18px;border-radius:50%;background:var(--line2);transition:background .06s, transform .06s, box-shadow .06s}
+.beat.first{width:22px;height:22px}
+.beat.on{background:var(--accent);box-shadow:0 0 18px var(--accent);transform:scale(1.15)}
+.beat.first.on{background:#fff;box-shadow:0 0 22px #ffb36b}
+.seg{display:inline-flex;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 11px;border-radius:9px;font-size:13px;color:var(--muted)}
+.seg button.on{background:var(--card2);color:var(--text);box-shadow:0 0 0 1px var(--line2)}
+.small-lbl{font-size:13px;color:var(--muted)}
+.play{width:84px;height:84px;border-radius:50%;border:0;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--accent),var(--accent2));box-shadow:0 10px 30px rgba(255,120,60,.4);transition:.15s}
+.play:hover{transform:scale(1.04)}
+.play svg{width:34px;height:34px;fill:#1a0f08}
+.play.running{background:linear-gradient(140deg,#ff7b6b,#e0434b);box-shadow:0 10px 30px rgba(224,67,75,.45)}
+
+/* Section title */
+.sec-title{display:flex;align-items:baseline;justify-content:space-between;margin:6px 2px 14px}
+.sec-title h2{margin:0;font-size:20px;font-weight:700}
+.sec-title span{color:var(--dim);font-size:13px}
+
+/* Cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px}
+.card{background:linear-gradient(180deg,var(--card),#171518);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px;transition:border-color .2s}
+.card:hover{border-color:var(--line2)}
+.card-head{display:flex;gap:12px;align-items:flex-start}
+.idx{flex:none;width:36px;height:36px;border-radius:11px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:15px;border:1px solid rgba(255,159,67,.25)}
+.card h3{margin:0;font-size:17px;font-weight:600;line-height:1.3}
+.stick{margin-top:6px;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+.stick b.sep{background:none;border:0;padding:0 2px;color:var(--dim)}
+.stick b.more{background:none;border:0;padding:0 2px;color:var(--dim)}
+.stick b{font-weight:500;font-size:11.5px;padding:0 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line)}
+.stick b.R{color:#ffc58f} .stick b.L{color:#9fc4ff}
+.stick b.acc{background:rgba(255,159,67,.18);border-color:rgba(255,159,67,.4)}
+.stick b.g{font-size:10.5px;opacity:.85}
+.latest{margin-inline-start:auto;text-align:left;flex:none}
+.latest .n{font-size:24px;font-weight:800;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
+.latest .t{font-size:11px;color:var(--dim)}
+.latest .d{font-size:11px;font-weight:600}
+.d.up{color:var(--good)} .d.down{color:var(--bad)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+.numwrap{display:flex;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:12px;overflow:hidden;transition:border-color .15s}
+.numwrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.numwrap input{flex:1;min-width:0;border:0;background:transparent;padding:10px 12px;font-size:18px;font-weight:600;outline:none;text-align:center;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.numwrap input::placeholder{color:var(--dim);font-size:13px;font-weight:400}
+.numwrap input::-webkit-outer-spin-button,.numwrap input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.numwrap button{border:0;background:transparent;color:var(--muted);width:34px;align-self:stretch;font-size:17px}
+.numwrap button:hover{color:var(--accent);background:var(--card2)}
+.chips-lbl{font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--line2);background:var(--bg2);padding:6px 12px;border-radius:99px;font-size:13px;color:var(--muted);transition:.12s;user-select:none}
+.chip:hover{color:var(--text)}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:#ffd2a6}
+textarea{width:100%;resize:vertical;min-height:44px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:14px;outline:none}
+textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.card-actions{display:flex;gap:8px}
+.card-actions .btn.primary{flex:1;justify-content:center}
+.chart{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:8px 8px 4px;position:relative}
+.chart svg{display:block;width:100%;height:96px}
+.chart .empty{height:96px;display:grid;place-items:center;color:var(--dim);font-size:13px}
+.legend{display:flex;gap:12px;font-size:11px;color:var(--dim);padding:2px 6px 4px}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-inline-end:5px;vertical-align:middle}
+details.hist{border-top:1px dashed var(--line);padding-top:10px}
+details.hist summary{cursor:pointer;font-size:13px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:6px}
+details.hist summary::-webkit-details-marker{display:none}
+details.hist summary::before{content:"‹";display:inline-block;transition:.2s;font-size:16px}
+details.hist[open] summary::before{transform:rotate(-90deg)}
+.hist ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;max-height:240px;overflow:auto}
+.hist li{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px 11px;font-size:13px;display:grid;grid-template-columns:1fr auto;gap:2px 8px}
+.hist .h-date{color:var(--dim);font-size:12px}
+.hist .h-bpm b{color:var(--accent)}
+.hist .h-tags{grid-column:1/-1;display:flex;gap:5px;flex-wrap:wrap}
+.hist .h-tags span{font-size:11px;padding:1px 8px;border-radius:99px;background:rgba(255,107,107,.1);color:#ffa4a4;border:1px solid rgba(255,107,107,.25)}
+.hist .h-note{grid-column:1/-1;color:var(--muted);font-size:12.5px;white-space:pre-wrap}
+.del{border:0;background:transparent;color:var(--dim);font-size:16px;padding:0 4px;line-height:1}
+.del:hover{color:var(--bad)}
+
+footer{margin-top:34px;text-align:center;color:var(--dim);font-size:12.5px}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(30px);background:#2a2420;border:1px solid var(--accent);color:var(--text);
+  padding:11px 20px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 10px 30px rgba(0,0,0,.5);z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- Plan: tasks & goals ---------- */
+.plan{background:linear-gradient(160deg,#1f1a1d,#161417 70%);border:1px solid var(--line2);border-radius:24px;padding:20px 22px;margin-bottom:22px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.plan::before{content:"";position:absolute;inset:-120px auto auto -80px;width:320px;height:320px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,140,60,.12),transparent);pointer-events:none}
+.plan-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;position:relative}
+.plan-ttl{display:flex;align-items:center;gap:12px}
+.plan-ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--accent-soft);border:1px solid rgba(255,159,67,.3);color:var(--accent);flex:none}
+.plan-ic svg{width:22px;height:22px}
+.plan h2{margin:0;font-size:21px;font-weight:700}
+.plan-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--accent-soft);color:#ffd2a6;border:1px solid rgba(255,159,67,.35);white-space:nowrap}
+.pill.soft{background:var(--bg2);color:var(--muted);border-color:var(--line2)}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:10px}
+.plan-body{display:flex;flex-direction:column;gap:16px;margin-top:18px;position:relative}
+.plan.collapsed .plan-body{display:none}
+.goals{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.goal{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.goal.done{border-color:rgba(95,211,154,.45)}
+.goal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.goal h3{margin:0;font-size:16px;font-weight:600}
+.goal .gk{font-size:11.5px;color:var(--dim);margin-top:2px}
+.goal .pct{font-size:24px;font-weight:800;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
+.goal.done .pct{color:var(--good)}
+.goal-path{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.goal-path .b{font-size:15px;color:var(--muted);font-weight:600}
+.goal-path .arr{color:var(--dim)}
+.goal-path .t{font-size:20px;font-weight:800}
+.goal-path .u{font-size:11px;color:var(--dim);margin-inline-start:2px}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;position:relative}
+.bar i{position:absolute;inset:0 0 0 auto;width:0;border-radius:99px;background:linear-gradient(to left,var(--accent),var(--accent2));transition:width .6s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 12px rgba(255,140,60,.45)}
+.goal.done .bar i{background:linear-gradient(to left,#7be3b0,var(--good));box-shadow:0 0 12px rgba(95,211,154,.4)}
+.goal-foot{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--muted)}
+.goal-foot b{color:var(--text);font-variant-numeric:tabular-nums}
+.panel{background:rgba(14,13,15,.55);border:1px solid var(--line);border-radius:18px;padding:16px}
+.panel-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.panel-h h3{margin:0;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.panel-h h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.panel-h span{font-size:12.5px;color:var(--dim)}
+.bl-chips{display:flex;flex-wrap:wrap;gap:8px}
+.bl{display:inline-flex;align-items:baseline;gap:7px;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:7px 12px;font-size:13px;color:var(--muted)}
+.bl b{color:var(--text);font-size:15px;font-variant-numeric:tabular-nums}
+.bl.goal-mark{border-color:rgba(255,159,67,.45)}
+.bl.goal-mark b{color:var(--accent)}
+.note{margin-top:12px;font-size:13px;padding:9px 12px;border-radius:12px;display:flex;gap:8px;align-items:flex-start}
+.note.warn{background:rgba(255,196,80,.08);border:1px solid rgba(255,196,80,.3);color:#ffd98a}
+.plan-cols{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;align-items:start}
+.side{display:flex;flex-direction:column;gap:16px}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0;position:relative}
+.tl li{display:grid;grid-template-columns:30px 1fr auto;gap:12px;align-items:center;padding:10px 0;position:relative}
+.tl li+li{border-top:1px dashed var(--line)}
+.tl li::before{content:"";position:absolute;right:14px;top:0;bottom:0;width:2px;background:var(--line);z-index:0}
+.tl li:first-child::before{top:50%} .tl li:last-child::before{bottom:50%}
+.tick{position:relative;z-index:1;width:30px;height:30px;border-radius:50%;border:2px solid var(--line2);background:var(--bg2);display:grid;place-items:center;padding:0;transition:.15s;color:transparent}
+.tick:hover{border-color:var(--accent)}
+.tick svg{width:15px;height:15px}
+.tl li.done .tick{background:var(--accent);border-color:var(--accent);color:#1a0f08;box-shadow:0 0 12px rgba(255,140,60,.45)}
+.tl li.done .st-title{text-decoration:line-through;text-decoration-color:rgba(255,159,67,.6);color:var(--muted)}
+.st-time{display:inline-block;font-size:11.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:7px;padding:1px 8px;margin-inline-end:6px;font-variant-numeric:tabular-nums;direction:rtl}
+.st-title{font-weight:600;font-size:14.5px}
+.st-desc{font-size:13px;color:var(--muted);margin-top:3px}
+.go{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);background:var(--card);border-radius:11px;padding:7px 11px;font-size:13px;font-weight:700;white-space:nowrap;transition:.15s;font-variant-numeric:tabular-nums}
+.go:hover{border-color:var(--accent);color:#ffd2a6}
+.go svg{width:12px;height:12px;fill:var(--accent)}
+.go.live{background:linear-gradient(140deg,var(--accent),var(--accent2));border-color:transparent;color:#1a0f08}
+.go.live svg{fill:#1a0f08}
+.tl-sum{font-size:12.5px;color:var(--dim)}
+.wk{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.wk-nav{display:flex;align-items:center;gap:6px}
+.wk-nav button{width:30px;height:30px;border-radius:9px;border:1px solid var(--line2);background:var(--card);padding:0;font-size:15px;color:var(--muted)}
+.wk-nav button:hover:not(:disabled){border-color:var(--accent);color:var(--text)}
+.wk-nav button:disabled{opacity:.35;cursor:default}
+.wk-range{font-size:12.5px;color:var(--muted);min-width:96px;text-align:center;font-variant-numeric:tabular-nums}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day{border:1px solid var(--line2);background:var(--card);border-radius:14px;padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:.15s;min-width:0}
+.day .dn{font-size:13px;font-weight:700}
+.day .dd{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+.day .dc{width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);display:grid;place-items:center;color:transparent}
+.day .dc svg{width:12px;height:12px}
+.day:hover:not(:disabled){border-color:var(--accent)}
+.day.today{border-color:rgba(255,159,67,.6);box-shadow:0 0 0 3px var(--accent-soft)}
+.day.on{background:linear-gradient(180deg,rgba(255,159,67,.22),rgba(255,107,61,.10));border-color:var(--accent)}
+.day.on .dc{background:var(--accent);border-color:var(--accent);color:#1a0f08}
+.day:disabled{opacity:.35;cursor:default}
+.day.sun .dd::after{content:" · מדידה";color:var(--accent)}
+.wk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
+.streak{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--text)}
+.streak .fl{font-size:18px}
+.streak b{font-size:20px;color:var(--accent);font-variant-numeric:tabular-nums}
+.kit-meta{font-size:12.5px;color:var(--muted);margin:-4px 0 12px}
+.chk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.chk li{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:13.5px;cursor:pointer;transition:.15s;user-select:none}
+.chk li:hover{border-color:var(--line2)}
+.chk li .box{flex:none;width:20px;height:20px;border-radius:6px;border:2px solid var(--line2);display:grid;place-items:center;color:transparent;margin-top:1px}
+.chk li .box svg{width:12px;height:12px}
+.chk li.on{border-color:rgba(255,159,67,.4)}
+.chk li.on .box{background:var(--accent);border-color:var(--accent);color:#1a0f08}
+.chk li.on .tx{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(255,159,67,.6)}
+.sess{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.sess button{width:28px;height:28px;border-radius:50%;border:2px solid var(--line2);background:var(--bg2);padding:0;font-size:12px;font-weight:700;color:var(--dim)}
+.sess button.on{background:var(--accent);border-color:var(--accent);color:#1a0f08}
+.sess button.opt{border-style:dashed}
+.rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rules li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px}
+.rules li .ri{flex:none;width:24px;height:24px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:700}
+.up{display:flex;flex-direction:column;gap:8px}
+.up-item{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 11px;font-size:13.5px}
+.up-item .ui{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:rgba(127,178,255,.12);color:var(--blue)}
+.up-item .ui svg{width:16px;height:16px}
+.up-item .us{font-size:12px;color:var(--dim)}
+.up-item.next{border-color:rgba(255,159,67,.45)}
+.up-item .tag{margin-inline-start:auto;font-size:11px;font-weight:700;color:#1a0f08;background:var(--accent);border-radius:99px;padding:2px 8px;white-space:nowrap}
+.up-item.past{opacity:.5}
+
+/* ---------- Timer ---------- */
+.timer{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;border-top:1px dashed var(--line2);padding-top:18px;min-width:0}
+.t-ring-wrap{position:relative;width:156px;height:156px;flex:none;margin-inline:auto}
+.t-ring{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.t-ring .trk{fill:none;stroke:var(--line);stroke-width:9}
+.t-ring .prog{fill:none;stroke:url(#tGrad);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .25s linear;filter:drop-shadow(0 0 6px rgba(255,140,60,.45))}
+.t-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 18px}
+.t-time{font-size:40px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;direction:ltr;letter-spacing:-.5px}
+.t-lbl{font-size:12px;color:var(--muted);margin-top:6px;max-width:112px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timer.run .t-time{color:#ffd2a6}
+.timer.done .t-time{color:var(--accent)}
+.t-main{display:flex;flex-direction:column;gap:12px;min-width:0}
+.t-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.t-row .chip{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.t-row .chip:disabled,.tstep:disabled{opacity:.4;cursor:default}
+.tstep{white-space:nowrap;height:34px;min-width:58px;border-radius:11px;border:1px solid var(--line2);background:var(--card2);font-weight:700;font-size:13px;padding:0 10px;font-variant-numeric:tabular-nums}
+.tstep:hover:not(:disabled){border-color:var(--accent)}
+.t-row .btn{padding:9px 16px}
+.t-row .btn.primary{min-width:104px;justify-content:center}
+.sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;margin-inline-start:4px}
+.sw input{position:absolute;opacity:0;width:1px;height:1px}
+.sw .knob{width:36px;height:20px;border-radius:99px;background:var(--line2);position:relative;transition:.15s;flex:none}
+.sw .knob::after{content:"";position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.15s}
+.sw input:checked+.knob{background:var(--accent)}
+.sw input:checked+.knob::after{right:19px}
+.sw input:focus-visible+.knob{box-shadow:0 0 0 3px var(--accent-soft)}
+.t-rt{background:rgba(14,13,15,.5);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.t-rt-idle{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.t-rt-idle .tx{font-size:13px;color:var(--muted)}
+.t-rt-idle .tx b{color:var(--text)}
+.t-rt-on{display:none;flex-direction:column;gap:10px}
+.t-rt.active .t-rt-idle{display:none}
+.t-rt.active .t-rt-on{display:flex}
+.t-rt.active{border-color:rgba(255,159,67,.45)}
+.rt-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rt-head .pill{padding:4px 10px}
+.rt-name{font-weight:700;font-size:16px}
+.rt-bpm{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rt-stats{display:grid;grid-template-columns:auto auto 1fr;gap:8px}
+.rt-stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 11px;min-width:0}
+.rt-stat .k{font-size:11.5px;color:var(--dim)}
+.rt-stat .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;direction:ltr;text-align:right}
+.rt-stat.nx .v{font-size:13.5px;font-weight:600;direction:rtl;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.9}
+.rt-segs{display:flex;gap:4px}
+.rt-segs i{height:6px;border-radius:99px;background:var(--line);position:relative;overflow:hidden}
+.rt-segs i.done{background:var(--accent)}
+.rt-segs i.skip{background:var(--line2)}
+.rt-segs i b{position:absolute;inset:0 0 0 auto;background:linear-gradient(to left,var(--accent),var(--accent2))}
+.tl li.cur .st-title{color:#ffd2a6}
+.tl li.cur .tick{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+@keyframes tflash{0%,100%{box-shadow:var(--shadow);border-color:var(--line2)}25%,60%{box-shadow:0 0 0 3px var(--accent),0 0 60px rgba(255,140,60,.55);border-color:var(--accent)}}
+.metro.flash{animation:tflash .7s ease 3}
+@keyframes tpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.metro.flash .t-ring-wrap{animation:tpulse .7s ease 3}
+
+/* ---------- categories + exercise → sub-exercise ---------- */
+.cats{display:flex;gap:8px;flex-wrap:wrap;margin:0 2px 16px;padding-bottom:2px}
+.cats button{border:1px solid var(--line2);background:var(--card);border-radius:99px;padding:8px 16px;font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap;transition:.15s}
+.cats button span{font-size:11.5px;color:var(--dim);font-weight:500;margin-inline-start:4px}
+.cats button:hover{color:var(--text);border-color:var(--accent)}
+.cats button.on{background:linear-gradient(140deg,var(--accent),var(--accent2));border-color:transparent;color:#1a0f08}
+.cats button.on span{color:#3a2210}
+.grid{align-items:start;grid-auto-flow:row dense}
+.card.ex[hidden]{display:none}
+.card.ex{padding:0;gap:0}
+.card.ex.open{grid-column:1/-1;border-color:rgba(255,159,67,.4)}
+.ex-head{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:12px;padding:16px 18px;width:100%;border-radius:var(--radius)}
+.ex-head:focus-visible{box-shadow:0 0 0 3px var(--accent-soft)}
+.ex-ttl{min-width:0;display:flex;flex-direction:column}
+.ex-meta{font-size:12px;color:var(--dim);margin-top:2px}
+.ex-head .latest{display:flex;flex-direction:column;align-items:flex-end;text-align:left}
+.ex-head .latest .t{max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.chev{flex:none;color:var(--dim);font-size:20px;transition:transform .2s;width:18px;text-align:center}
+.ex.open .chev{transform:rotate(-90deg);color:var(--accent)}
+.ex-body{display:none;padding:0 18px 18px;flex-direction:column;gap:14px}
+.ex.open .ex-body{display:flex}
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:14px}
+.subtab{border:1px solid var(--line2);background:var(--bg2);border-radius:12px;padding:7px 12px;font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:8px;transition:.12s}
+.subtab:hover{color:var(--text);border-color:var(--accent)}
+.subtab.on{background:var(--accent-soft);border-color:var(--accent);color:#ffd2a6}
+.subtab .bd{font-size:11.5px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.subtab .bd:empty{display:none}
+.subtab.add{border-style:dashed;color:var(--accent)}
+.addsub{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;background:var(--bg2);border:1px dashed var(--line2);border-radius:14px;padding:12px}
+.addsub[hidden]{display:none}
+.tin{width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:14px;outline:none}
+.tin:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.add-act{display:flex;gap:6px}
+.subp{display:grid;grid-template-columns:1.1fr 1fr;gap:14px 20px;align-items:start}
+.subp[hidden]{display:none}
+.sp-main,.sp-side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.subp h4{margin:0;font-size:16px;font-weight:600}
+.cbadge{font-size:11px;font-weight:700;color:#1a0f08;background:var(--accent);border-radius:99px;padding:1px 8px;vertical-align:middle}
+.del-sub{flex:none;padding:10px 12px}
+.del-sub:hover{border-color:var(--bad)}
+.stk{display:inline-flex;flex-wrap:wrap;gap:4px;direction:ltr}
+.stk b{font-weight:600;font-size:12.5px;padding:1px 6px;border-radius:7px;background:var(--bg2);border:1px solid var(--line);letter-spacing:1px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.stk b.more,.stk b.txt{background:none;border:0;font-family:inherit;letter-spacing:0;color:var(--dim)}
+.stk i{font-style:normal}
+.stk i.R{color:#ffc58f} .stk i.L{color:#9fc4ff}
+.stk i.g{font-size:9.5px;opacity:.85;vertical-align:1px}
+.stk i.acc{color:#fff;text-shadow:0 0 8px rgba(255,159,67,.9);border-bottom:2px solid var(--accent)}
+.stk i.bz{font-size:9px;color:var(--dim);vertical-align:-1px;letter-spacing:0}
+.stick .hint{flex-basis:100%;margin-top:3px}
+/* routine step controls */
+.st-ctl{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-top:8px}
+.numwrap.sm{width:118px;border-radius:10px}
+.numwrap.sm input{padding:5px 2px;font-size:15px}
+.numwrap.sm button{width:30px;font-size:15px}
+.st-link{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:12.5px;color:var(--text);max-width:220px;outline:none}
+.st-link:focus{border-color:var(--accent)}
+.st-hint{font-size:12px;color:var(--dim)}
+.st-hint b{color:var(--accent)}
+.st-save{border:1px dashed var(--line2);background:transparent;border-radius:10px;padding:5px 9px;font-size:12px;color:var(--muted)}
+.st-save:hover:not(:disabled){border-color:var(--accent);color:#ffd2a6}
+.st-save:disabled{opacity:.35;cursor:default}
+/* google sheets sync */
+.sync-dot{width:9px;height:9px;border-radius:50%;background:var(--dim);flex:none;display:inline-block}
+.sync-dot.ok{background:var(--good);box-shadow:0 0 8px rgba(95,211,154,.6)}
+.sync-dot.wait{background:#ffc450;box-shadow:0 0 8px rgba(255,196,80,.5)}
+.sync-dot.err{background:var(--bad);box-shadow:0 0 8px rgba(255,107,107,.6)}
+.syncp{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line2);border-radius:var(--radius);padding:16px 18px;margin-bottom:18px;box-shadow:var(--shadow)}
+.syncp[hidden]{display:none}
+.syncp-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.syncp h2{margin:0;font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}
+.syncp .sp-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.syncp .tin{flex:1 1 320px;min-width:0;text-align:left;background:var(--bg2)}
+.sync-st{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sync-st b{color:var(--text)}
+.sync-st .e{color:#ffa4a4}
+.sync-help{font-size:12.5px;color:var(--dim);margin-top:10px;line-height:1.6}
+.sync-help a{color:var(--accent)}
+.fixbar{margin:0 0 18px;align-items:center;flex-wrap:wrap}
+.fixbar .fx-t{flex:1 1 300px}
+.fixbar .fx-a{display:flex;gap:8px;flex-wrap:wrap}
+.fixbar[hidden]{display:none}
+.card-actions{flex-wrap:wrap}
+.card-actions .btn.work-btn{flex:1;justify-content:center;border-color:rgba(127,178,255,.45);color:#cfe0ff}
+.card-actions .btn.work-btn:hover{border-color:var(--blue);background:rgba(127,178,255,.08)}
+.log-hint{font-size:11.5px;color:var(--dim);margin-top:-6px;line-height:1.5}
+.log-hint b{color:var(--muted);font-weight:600}
+.kind{display:inline-block;font-size:10.5px;font-weight:600;padding:0 7px;border-radius:99px;margin-inline-end:6px;vertical-align:1px}
+.kind.max{background:var(--accent-soft);color:#ffd2a6;border:1px solid rgba(255,159,67,.3)}
+.kind.work{background:rgba(127,178,255,.1);color:#b9d3ff;border:1px solid rgba(127,178,255,.3)}
+.hist li.work{border-style:dashed}
+.hist li.work .h-bpm b{color:var(--blue)}
+.latest .w{font-size:11px;color:#b9d3ff;margin-top:2px}
+.sd-sel{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:13px;color:var(--text);outline:none}
+.sd-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.st-hint .w{color:var(--blue)}
+.st-work{border:1px dashed rgba(127,178,255,.45);background:transparent;border-radius:10px;padding:5px 9px;font-size:12px;color:#b9d3ff}
+.st-work:hover:not(:disabled){border-color:var(--blue);background:rgba(127,178,255,.08)}
+.st-work:disabled{opacity:.35;cursor:default}
+@media (max-width:900px){ .subp{grid-template-columns:1fr} .addsub{grid-template-columns:1fr} }
+
+@media (max-width:980px){
+  .summary{grid-template-columns:1fr 1fr}
+  .metro{grid-template-columns:1fr auto}
+  .metro-mid{grid-column:1/-1;order:3}
+  .timer{order:4}
+  .goals{grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .plan-cols{grid-template-columns:1fr}
+}
+@media (max-width:620px){
+  .wrap{padding:18px 14px 50px}
+  h1{font-size:24px}
+  .grid{grid-template-columns:1fr}
+  .summary{gap:10px}
+  .stat{padding:13px 14px}
+  .stat .val{font-size:18px}
+  .metro{padding:16px;gap:16px}
+  .metro-bpm .num{font-size:46px}
+  .play{width:70px;height:70px}
+  #mSlider{order:-1;flex-basis:100%;margin-bottom:6px}
+  .timer{grid-template-columns:1fr;gap:14px;padding-top:14px}
+  .t-ring-wrap{width:150px;height:150px}
+  .t-row{justify-content:center}
+  #tPresets .small-lbl{display:none}
+  .t-row .chip{flex:1 1 18%;text-align:center;padding:7px 4px}
+  .tstep{flex:1 1 40%}
+  .t-row .btn{flex:1;justify-content:center}
+  .sw{flex-basis:100%;justify-content:center;margin:2px 0 0}
+  .t-rt-idle{justify-content:center;text-align:center}
+  .t-rt-idle .btn{width:100%;justify-content:center}
+  .rt-stats{grid-template-columns:1fr 1fr}
+  .rt-stat.nx{grid-column:1/-1}
+  .metro .step{flex:1}
+  .actions{width:100%}
+  .actions .btn{flex:1;justify-content:center;padding:10px 8px;font-size:13px}
+  .plan{padding:16px 14px;border-radius:20px}
+  .plan h2{font-size:19px}
+  .goals{grid-template-columns:1fr}
+  .goal{padding:14px}
+  .panel{padding:14px 12px}
+  .tl li{grid-template-columns:28px 1fr;gap:10px}
+  .tl li .go{grid-column:2;justify-self:start}
+  .tick{width:28px;height:28px}
+  .tl li::before{right:13px}
+  .week{gap:5px}
+  .day{border-radius:11px;padding:7px 0}
+  .day .dd{font-size:10.5px}
+  .day.sun .dd::after{content:""}
+  .plan-meta{width:100%}
+  .ex-head{padding:14px}
+  .ex-body{padding:0 14px 14px}
+  .st-ctl select{max-width:100%;flex:1 1 100%}
+  .syncp{padding:14px 12px}
+  .syncp .sp-row .btn{flex:1 1 30%;justify-content:center}
+  .cats{flex-wrap:nowrap;overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none" stroke="#1a0f08" stroke-width="2.4" stroke-linecap="round"><ellipse cx="16" cy="20" rx="11" ry="4.5"/><path d="M5 20v-2.5c0-2.5 4.9-4.5 11-4.5s11 2 11 4.5V20"/><path d="M9 4l7 11M23 4l-7 11"/></svg>
+    </div>
+    <div>
+      <h1>מעקב רודימנטים</h1>
+      <div class="sub">אבחון בסיס על פד אימון · רימון</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="copyBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>העתק סיכום</button>
+    <button class="btn" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>ייצוא נתונים</button>
+    <button class="btn" id="importBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 15V3M7 8l5-5 5 5M4 21h16"/></svg>ייבוא</button>
+    <button class="btn" id="syncBtn" aria-expanded="false" aria-controls="syncPanel" title="סנכרון לגוגל שיטס"><span class="sync-dot" id="syncDot" aria-hidden="true"></span><span id="syncLbl">גוגל שיטס</span></button>
+    <input type="file" id="importFile" accept=".json,application/json" class="sr">
+  </div>
+</header>
+
+<section class="syncp" id="syncPanel" hidden aria-labelledby="syncTitle">
+  <div class="syncp-h">
+    <h2 id="syncTitle"><span class="sync-dot" id="syncDot2" aria-hidden="true"></span>סנכרון לגוגל שיטס</h2>
+    <span class="sync-st" id="syncStatus" role="status"></span>
+  </div>
+  <div class="sp-row">
+    <input type="url" class="tin" id="syncUrl" dir="ltr" spellcheck="false" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec" aria-label="כתובת ה-Web App מגוגל">
+    <button type="button" class="btn sm" id="syncSave">שמור כתובת</button>
+    <button type="button" class="btn sm" id="syncTest">בדוק חיבור</button>
+    <button type="button" class="btn primary sm" id="syncAll">סנכרן הכל עכשיו</button>
+  </div>
+  <div class="sync-help">כל מדידה, טמפו עבודה וסוף שגרה/טיימר נשלחים לגיליון אוטומטית, ושם המנטור קורא אותם. בלי אינטרנט – הכל נשמר בתור ונשלח כשהחיבור חוזר. „סנכרן הכל” כותב מחדש את כל ההיסטוריה לגיליון. הוראות התקנה: <b><bdi dir="ltr">sheets-sync/הוראות.md</bdi></b> <a id="syncSheetLink" href="#" target="_blank" rel="noopener" hidden>· פתח את הגיליון ↗</a></div>
+</section>
+
+<div class="note warn fixbar" id="fixBar" hidden>
+  <span aria-hidden="true">⚠</span>
+  <span class="fx-t" id="fixText"></span>
+  <span class="fx-a"><button type="button" class="btn primary sm" id="fixApply">תקן עכשיו</button><button type="button" class="btn sm" id="fixLater">לא עכשיו</button></span>
+</div>
+
+<section class="summary" id="summary" aria-label="סיכום"></section>
+
+<section class="plan" id="plan" aria-labelledby="planTitle">
+  <div class="plan-head">
+    <div class="plan-ttl">
+      <div class="plan-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></div>
+      <div>
+        <h2 id="planTitle">המשימות והיעדים שלי</h2>
+        <div class="sub">קו בסיס מ-16.10.2026 · יעדים עד 30.10.2026</div>
+      </div>
+    </div>
+    <div class="plan-meta">
+      <span class="pill" id="daysLeft"></span>
+      <span class="pill soft" id="nextMeasure"></span>
+      <button class="btn sm" id="planToggle" aria-expanded="true" aria-controls="planBody">הסתר</button>
+    </div>
+  </div>
+
+  <div class="plan-body" id="planBody">
+    <div class="goals" id="goals" aria-label="יעדים עד 30.10"></div>
+
+    <div class="panel">
+      <div class="panel-h"><h3><i class="dot"></i>קו בסיס – 16.10.2026</h3><span>BPM נקי</span></div>
+      <div class="bl-chips">
+        <span class="bl">סינגל שמיניות <b>225</b></span>
+        <span class="bl">סינגל שש-עשריות <b>110</b></span>
+        <span class="bl goal-mark">דאבל <b>165</b></span>
+        <span class="bl">פרדידל <b>180</b></span>
+        <span class="bl">פלאם ימין <b>190</b></span>
+        <span class="bl goal-mark">פלאם שמאל <b>120</b></span>
+        <span class="bl goal-mark">דראג <b>90</b></span>
+        <span class="bl">דאבל דינמיקה <b>90</b></span>
+      </div>
+      <div class="note warn"><span aria-hidden="true">⚠</span><span>סינגל ביד אחת נמדד ב-16.10 ברבעים (240) – לא בר-השוואה. יד שמאל נמדדה שוב ב-17.10 (120); צריך למדוד גם יד ימין באותה חלוקה.</span></div>
+    </div>
+
+    <div class="plan-cols">
+      <div class="panel">
+        <div class="panel-h"><h3><i class="dot"></i>שגרה יומית על הפד</h3><span>25 דקות · 5–6 ימים בשבוע</span></div>
+        <ol class="tl" id="routine"></ol>
+        <div class="tl-sum" id="routineSum"></div>
+
+        <div class="wk">
+          <div class="panel-h" style="margin-bottom:10px">
+            <h3><i class="dot"></i>סימון תרגול היום</h3>
+            <div class="wk-nav">
+              <button type="button" id="wkPrev" aria-label="השבוע הקודם">›</button>
+              <span class="wk-range" id="wkRange"></span>
+              <button type="button" id="wkNext" aria-label="השבוע הבא">‹</button>
+            </div>
+          </div>
+          <div class="week" id="week" role="group" aria-label="ימי תרגול בשבוע"></div>
+          <div class="wk-foot">
+            <span class="streak"><span class="fl" aria-hidden="true">🔥</span>רצף: <b id="streakN">0</b> <span id="streakU">ימים</span></span>
+            <span id="wkCount"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="panel">
+          <div class="panel-h"><h3><i class="dot"></i>משימות שבועיות על המערכת</h3><span id="kitCount"></span></div>
+          <div class="kit-meta">2–3 סשנים של 30–45 דק' בשבוע · ברימון בחדר משוריין – אפשר גם בלי מצילות</div>
+          <ul class="chk" id="kit"></ul>
+          <div class="sess" id="sess"><span>סשנים השבוע:</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><h3><i class="dot"></i>כללים</h3></div>
+          <ul class="rules">
+            <li><span class="ri">1</span><span>עולים בקצב רק אחרי דקה נקייה</span></li>
+            <li><span class="ri">2</span><span>קפיצות של 5 BPM</span></li>
+            <li><span class="ri">3</span><span>קביעות עדיפה על כמות</span></li>
+            <li><span class="ri">4</span><span>מדידה כל יום ראשון והדבקת הסיכום למאסטרו</span></li>
+            <li><span class="ri">5</span><span>בשבוע עמוס – לפחות 15 דק' פד</span></li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><h3><i class="dot"></i>בקרוב</h3></div>
+          <div class="up" id="upcoming"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="metro" aria-label="מטרונום">
+  <div class="metro-bpm">
+    <div class="num" id="mBpm">80</div>
+    <div class="unit">BPM</div>
+  </div>
+  <div class="metro-mid">
+    <div class="metro-row">
+      <button class="step" data-step="-5">‎−5</button>
+      <button class="step" data-step="-1">‎−1</button>
+      <input type="range" id="mSlider" min="30" max="240" value="80" aria-label="קצב">
+      <button class="step" data-step="1">‎+1</button>
+      <button class="step" data-step="5">‎+5</button>
+    </div>
+    <div class="metro-row" style="justify-content:space-between">
+      <div class="beats" id="beats"></div>
+      <div class="metro-row" style="gap:14px">
+        <span class="small-lbl">משקל</span>
+        <div class="seg" id="meterSeg">
+          <button data-v="2">2</button><button data-v="3">3</button><button data-v="4" class="on">4</button><button data-v="6">6</button>
+        </div>
+        <span class="small-lbl">חלוקה</span>
+        <div class="seg" id="subSeg">
+          <button data-v="1" class="on">רבעים</button><button data-v="2">שמיניות</button><button data-v="4">שש-עשריות</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="play" id="playBtn" aria-label="הפעל / עצור">
+    <svg id="playIcon" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>
+  </button>
+  <div class="timer" id="timer" aria-label="טיימר">
+    <div class="t-ring-wrap">
+      <svg class="t-ring" viewBox="0 0 120 120" aria-hidden="true">
+        <defs><linearGradient id="tGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb36b"/><stop offset="1" stop-color="#ff6b3d"/></linearGradient></defs>
+        <circle class="trk" cx="60" cy="60" r="52"/>
+        <circle class="prog" id="tProg" cx="60" cy="60" r="52"/>
+      </svg>
+      <div class="t-center"><div class="t-time" id="tTime" role="timer" aria-live="off">05:00</div><div class="t-lbl" id="tLbl">טיימר</div></div>
+    </div>
+    <div class="t-main">
+      <div class="t-row" id="tPresets">
+        <span class="small-lbl">טיימר</span>
+        <button type="button" class="chip" data-min="1">1 דק'</button>
+        <button type="button" class="chip" data-min="3">3 דק'</button>
+        <button type="button" class="chip" data-min="5">5 דק'</button>
+        <button type="button" class="chip" data-min="7">7 דק'</button>
+        <button type="button" class="tstep" data-tadj="-1" aria-label="הורד דקה"><bdi dir="ltr">−1</bdi> דק'</button>
+        <button type="button" class="tstep" data-tadj="1" aria-label="הוסף דקה"><bdi dir="ltr">+1</bdi> דק'</button>
+      </div>
+      <div class="t-row">
+        <button type="button" class="btn primary" id="tStart" title="קיצור מקלדת: T">התחל</button>
+        <button type="button" class="btn" id="tReset">איפוס</button>
+        <label class="sw"><input type="checkbox" id="tWithMetro" checked><span class="knob" aria-hidden="true"></span>הפעל מטרונום יחד</label>
+      </div>
+      <div class="t-rt" id="tRt">
+        <div class="t-rt-idle">
+          <span class="tx"><b>שגרה יומית מלאה</b> · 5 שלבים · 25 דק' · הקצב (כפי שקבעת בכל שלב) והחלוקה מתעדכנים אוטומטית</span>
+          <button type="button" class="btn primary" id="rtStart"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>התחל שגרה מלאה</button>
+        </div>
+        <div class="t-rt-on">
+          <div class="rt-head"><span class="pill" id="rtStepN">שלב 1/5</span><span class="rt-name" id="rtName"></span><span class="rt-bpm" id="rtBpm"></span></div>
+          <div class="rt-stats">
+            <div class="rt-stat"><div class="k">נותר בשלב</div><div class="v" id="rtStepLeft">00:00</div></div>
+            <div class="rt-stat"><div class="k">סה״כ נותר</div><div class="v" id="rtTotalLeft">00:00</div></div>
+            <div class="rt-stat nx"><div class="k">השלב הבא</div><div class="v" id="rtNext"></div></div>
+          </div>
+          <div class="rt-segs" id="rtSegs"></div>
+          <div class="t-row">
+            <button type="button" class="btn sm" id="rtPause">השהה</button>
+            <button type="button" class="btn sm" id="rtSkip">דלג על שלב ‹</button>
+            <button type="button" class="btn sm" id="rtStop">עצור שגרה</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sec-title"><h2>התרגילים</h2><span>אימון רגיל ← „טמפו עבודה היום” · מבחן אמיתי ← „מקסימום נקי (מדידה)”</span></div>
+<nav class="cats" id="cats" role="tablist" aria-label="קטגוריות"></nav>
+<main class="grid" id="grid"></main>
+
+<footer>הנתונים נשמרים בדפדפן הזה, ואם הוגדר סנכרון – גם בגוגל שיטס · מומלץ לבצע ייצוא נתונים מדי פעם לגיבוי</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+var STORE_KEY = "rimon-rudiments-v1";
+var UI_KEY = STORE_KEY+"-ui";
+var BREAKS = ["יד ימין","יד שמאל","עוצמה","צמידות לקצב","מתח בגוף"];
+var CATS = [{id:"all",name:"הכול"},{id:"rud",name:"רודימנטים"},{id:"roll",name:"רולים"},{id:"test",name:"מבחנים"}];
+/* sticking notation: R/L = main stroke, r/l = grace note, ">" = accent on next stroke, "z" = buzz (after stroke),
+   space = group separator, "…" = continue. Any other text is shown as-is. */
+function rollSubs(id, right, left, acc){
+  var a=[{id:id, name:"בסיסי (מתחיל מימין)", stick:right},{id:id+"_l", name:"מתחיל משמאל", stick:left}];
+  if(acc) a.push({id:id+"_acc", name:"עם דגש בסוף", stick:acc});
+  return a;
+}
+var EXERCISES = [
+  {id:"single", cat:"rud", name:"סינגל סטרוק", subs:[
+    {id:"single8",  name:"בסיסי – שמיניות", stick:"R L R L R L R L"},
+    {id:"single16", name:"שש-עשריות", stick:"RLRL RLRL"},
+    {id:"s_acc4r",  name:"דגש כל 4 (ימין)", stick:">RLRL >RLRL"},
+    {id:"s_acc4alt",name:"דגש כל 4 מתחלף", stick:">RLRL >LRLR"},
+    {id:"s_acc3",   name:"דגש כל 3 (תחושת טריולה)", stick:">RLR >LRL"}]},
+  {id:"double", cat:"rud", name:"דאבל סטרוק", subs:[
+    {id:"double8", name:"בסיסי – שמיניות", stick:"RR LL RR LL"},
+    {id:"d_acc2",  name:"דגש על המכה השנייה", stick:"R>R L>L R>R L>L"},
+    {id:"d_16",    name:"שש-עשריות", stick:"RRLL RRLL"},
+    {id:"d_acc4",  name:"דגש כל 4", stick:">RRLL >RRLL"},
+    {id:"d_oco",   name:"פתוח-סגור (איטי→מהיר)", stick:"RR LL …", hint:"מתחילים לאט ופתוח, מאיצים בהדרגה עד רול סגור, וחוזרים לאט"}]},
+  {id:"para", cat:"rud", name:"פרדידל", subs:[
+    {id:"para8",    name:"בסיסי – דגש על 1", stick:">RLRR >LRLL"},
+    {id:"p_acclast",name:"דגש על המכה האחרונה", stick:"RLR>R LRL>L"},
+    {id:"p_double", name:"פרדידל כפול (Double Paradiddle)", stick:">RLRLRR >LRLRLL"},
+    {id:"p_pdd",    name:"פרדידל-דידל", stick:">RLRRLL >LRLLRR"},
+    {id:"p_inv",    name:"אינברטד פרדידל", stick:"RLLR LRRL"},
+    {id:"p_triple", name:"טריפל פרדידל", stick:">RLRLRLRR >LRLRLRLL"}]},
+  {id:"flam", cat:"rud", name:"פלאם", subs:[
+    {id:"flamR",  name:"יד ימין", stick:"lR lR", hint:"תו חן ביד שמאל ← מכה ביד ימין"},
+    {id:"flamL",  name:"יד שמאל", stick:"rL rL", hint:"תו חן ביד ימין ← מכה ביד שמאל"},
+    {id:"f_tap",  name:"פלאם טאפ", stick:"lRR rLL"},
+    {id:"f_acc",  name:"פלאם אקסנט", stick:"lRLR rLRL", hint:"בטריולות"},
+    {id:"f_cue",  name:"פלאמקיו", stick:"lR>LRL lR", hint:"פלאם בהתחלה ובסוף, דגש על המכה השנייה"},
+    {id:"f_para", name:"פלאם פרדידל", stick:"lRLRR rLRLL"}]},
+  {id:"dragx", cat:"rud", name:"דראג", subs:[
+    {id:"drag",    name:"בסיסי", stick:"llR rrL", hint:"שתי מכות חן מהירות לפני המכה הראשית"},
+    {id:"dr_tap",  name:"דראג טאפ (Single Drag Tap)", stick:"llRL rrLR"},
+    {id:"dr_l25",  name:"לסון 25 (Lesson 25)", stick:"llRLR …", hint:"דראג + שתי מכות בודדות"},
+    {id:"dr_ruff", name:"ראף (4 מכות)", stick:"lrlR rlrL", hint:"3 מכות חן מהירות + מכה ראשית"}]},
+  {id:"r_buzz", cat:"roll", name:"באז רול (Multiple Bounce Roll)", subs:rollSubs("r_buzz","Rz Lz Rz Lz","Lz Rz Lz Rz")},
+  {id:"r5",  cat:"roll", name:"רול של 5", subs:rollSubs("r5","RRLL R","LLRR L","RRLL >R")},
+  {id:"r6",  cat:"roll", name:"רול של 6", subs:rollSubs("r6",">R LLRR >L",">L RRLL >R")},
+  {id:"r7",  cat:"roll", name:"רול של 7", subs:rollSubs("r7","RRLLRR L","LLRRLL R","RRLLRR >L")},
+  {id:"r9",  cat:"roll", name:"רול של 9", subs:rollSubs("r9","RRLLRRLL R","LLRRLLRR L","RRLLRRLL >R")},
+  {id:"r10", cat:"roll", name:"רול של 10", subs:rollSubs("r10","RRLLRRLL R L","LLRRLLRR L R","RRLLRRLL >R >L")},
+  {id:"r11", cat:"roll", name:"רול של 11", subs:rollSubs("r11","RRLLRRLLRR L","LLRRLLRRLL R","RRLLRRLLRR >L")},
+  {id:"r13", cat:"roll", name:"רול של 13", subs:rollSubs("r13","RRLLRRLLRRLL R","LLRRLLRRLLRR L","RRLLRRLLRRLL >R")},
+  {id:"r15", cat:"roll", name:"רול של 15", subs:rollSubs("r15","RRLLRRLLRRLLRR L","LLRRLLRRLLRRLL R","RRLLRRLLRRLLRR >L")},
+  {id:"r17", cat:"roll", name:"רול של 17", subs:rollSubs("r17","RRLLRRLLRRLLRRLL R","LLRRLLRRLLRRLLRR L","RRLLRRLLRRLLRRLL >R")},
+  {id:"r_open", cat:"roll", name:"רול פתוח / דאבל סטרוק רול", subs:rollSubs("r_open","RRLL RRLL …","LLRR LLRR …").concat([
+    {id:"r_open_oco", name:"פתוח-סגור-פתוח", stick:"RRLL …", hint:"מאיצים בהדרגה מפתוח לסגור ומאטים חזרה"}])},
+  {id:"r_triple", cat:"roll", name:"רול טריפל סטרוק", subs:rollSubs("r_triple","RRR LLL …","LLL RRR …")},
+  {id:"tests", cat:"test", name:"מבחני יד אחת ודינמיקה", subs:[
+    {id:"singleL", name:"יד שמאל בלבד", stick:"LLLL LLLL"},
+    {id:"singleR", name:"יד ימין בלבד", stick:"RRRR RRRR"},
+    {id:"dyn80",   name:"דאבל דינמיקה (8 שקט / 8 חזק) ב-80", stick:"RRLL RRLL …", hint:"8 מכות שקטות ואז 8 מכות חזקות, ב-80 BPM", fixed:80}]}
+];
+
+/* ---------- storage + migration ---------- */
+function freshState(){ return {__v:2, entries:{}, custom:{}}; }
+function isObj(o){ return o && typeof o==="object" && !Array.isArray(o); }
+function normEntry(x){
+  var o={date:String(x.date),clean:num(x.clean),hard:num(x.hard),broke:Array.isArray(x.broke)?x.broke.map(String):[],notes:x.notes?String(x.notes):""};
+  if(x.kind==="work"){ o.kind="work"; o.work=num(x.work)||o.clean; o.clean=null; o.hard=null; } // working tempo – never a max
+  if(x.subdiv) o.subdiv=String(x.subdiv);
+  return o;
+}
+var SUBDIVS=["רבעים","שמיניות","שש-עשריות","טריולות"];
+function isWork(x){ return !!x && x.kind==="work"; }
+// subdivision of an entry: explicit field, or "רבעים" when the notes say it was played in quarters
+function subdivOf(x){ if(!x) return ""; if(x.subdiv) return String(x.subdiv); return /(^|[\s(])ב?רבעים/.test(x.notes||"") ? "רבעים" : ""; }
+function sameSubdiv(a,b){ var x=subdivOf(a), y=subdivOf(b); return x===y || (!x && y!=="רבעים") || (!y && x!=="רבעים"); }
+// Old format (v1): {subId:[entries]} at top level. New format: {__v:2, entries:{subId:[...]}, custom:{exId:[{id,name,stick}]}}
+// Old card ids are kept as the ids of the matching sub-exercises, so history and goals carry over untouched.
+function migrate(d, strict){
+  var s=freshState();
+  if(!isObj(d)) return s;
+  var src = d.__v===2 ? (isObj(d.entries)?d.entries:{}) : d;
+  Object.keys(src).forEach(function(k){
+    if(!Array.isArray(src[k])) return;
+    var arr=src[k].filter(function(x){ return isObj(x) && (!strict || x.date); });
+    s.entries[k] = strict ? arr.map(normEntry) : arr;
+  });
+  if(d.__v===2 && isObj(d.custom)){
+    Object.keys(d.custom).forEach(function(ex){
+      if(!Array.isArray(d.custom[ex])) return;
+      s.custom[ex]=d.custom[ex].filter(function(c){ return isObj(c)&&c.id&&c.name; })
+        .map(function(c){ return {id:String(c.id),name:String(c.name),stick:c.stick?String(c.stick):"",custom:true}; });
+    });
+  }
+  return s;
+}
+var state = load();
+function load(){
+  var raw=null, d;
+  try{ raw=localStorage.getItem(STORE_KEY); }catch(e){}
+  try{ d=JSON.parse(raw||"{}"); }catch(e){ d={}; }
+  var s=migrate(d,false);
+  if(raw && isObj(d) && d.__v!==2){ // one-time upgrade; keep an untouched copy of the old data
+    try{
+      if(!localStorage.getItem(STORE_KEY+"-premigration")) localStorage.setItem(STORE_KEY+"-premigration", raw);
+      localStorage.setItem(STORE_KEY, JSON.stringify(s));
+    }catch(e){}
+  }
+  return s;
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch(e){ toast("לא ניתן לשמור בדפדפן הזה – בצע ייצוא נתונים"); }
+  syncTouch();
+}
+function entries(id){ return Array.isArray(state.entries[id]) ? state.entries[id] : []; }
+function latest(id){ var e=entries(id); return e.length ? e[e.length-1] : null; }
+function latestClean(id){ var e=entries(id); for(var i=e.length-1;i>=0;i--){ if(e[i]&&e[i].clean&&!isWork(e[i])) return e[i]; } return null; }
+function latestWork(id){ var e=entries(id); for(var i=e.length-1;i>=0;i--){ if(isWork(e[i])&&e[i].work) return e[i]; } return null; }
+var ui=(function(){ var u={}; try{ u=JSON.parse(localStorage.getItem(UI_KEY)||"{}")||{}; }catch(e){}
+  if(!isObj(u)) u={}; if(!isObj(u.open)) u.open={}; if(!isObj(u.tab)) u.tab={}; if(!u.cat) u.cat="rud"; return u; })();
+function saveUi(){ try{ localStorage.setItem(UI_KEY, JSON.stringify(ui)); }catch(e){} }
+
+var SUB={}, EXOF={};
+function customOf(exId){ return Array.isArray(state.custom[exId]) ? state.custom[exId] : []; }
+function allSubs(ex){ return ex.subs.concat(customOf(ex.id)); }
+function indexSubs(){ SUB={}; EXOF={}; EXERCISES.forEach(function(ex){ allSubs(ex).forEach(function(s){ SUB[s.id]=s; EXOF[s.id]=ex; }); }); }
+indexSubs();
+function fullName(id){ var s=SUB[id], ex=EXOF[id]; return s ? ex.name+" · "+s.name : id; }
+function catName(id){ for(var i=0;i<CATS.length;i++) if(CATS[i].id===id) return CATS[i].name; return id; }
+
+/* ---------- helpers ---------- */
+function el(tag, attrs, html){
+  var n=document.createElement(tag);
+  if(attrs) for(var k in attrs){ if(k==="class") n.className=attrs[k]; else n.setAttribute(k,attrs[k]); }
+  if(html!=null) n.innerHTML=html;
+  return n;
+}
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+function fmtDate(ts, withTime){
+  var d=new Date(ts);
+  if(isNaN(d)) return String(ts).slice(0,10);
+  var s=d.toLocaleDateString("he-IL",{day:"numeric",month:"numeric",year:"2-digit"});
+  if(withTime) s+=" · "+d.toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
+  return s;
+}
+var toastT;
+function toast(msg){
+  var t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove("show");},2400);
+}
+function num(v){ var n=parseFloat(v); return isFinite(n)&&n>0 ? Math.round(n) : null; }
+
+function stickHTML(s){
+  var h="", str=String(s.stick||"").trim();
+  if(str){
+    h+='<span class="stk" dir="ltr">';
+    str.split(/\s+/).forEach(function(g){
+      if(g==="…"||g==="..."){ h+='<b class="more">…</b>'; return; }
+      if(!/^[RLrlz>]+$/.test(g)){ h+='<b class="txt">'+esc(g)+'</b>'; return; }
+      var inner="", acc=false;
+      for(var i=0;i<g.length;i++){
+        var ch=g[i];
+        if(ch===">"){ acc=true; continue; }
+        if(ch==="z"){ inner+='<i class="bz">z</i>'; continue; }
+        var main=ch==="R"||ch==="L";
+        inner+='<i class="'+ch.toUpperCase()+(main?"":" g")+(acc?" acc":"")+'">'+(acc?"›":"")+ch.toUpperCase()+'</i>';
+        acc=false;
+      }
+      h+='<b>'+inner+'</b>';
+    });
+    h+='</span>';
+  }
+  if(s.hint) h+='<span class="hint">'+esc(s.hint)+'</span>';
+  return h || '<span class="hint">אין סטיקינג</span>';
+}
+
+/* ---------- category bar ---------- */
+var grid=document.getElementById("grid");
+var catsEl=document.getElementById("cats");
+function renderCats(){
+  catsEl.innerHTML="";
+  CATS.forEach(function(c){
+    var n=EXERCISES.filter(function(ex){ return c.id==="all"||ex.cat===c.id; }).length;
+    var b=el("button",{"type":"button","role":"tab","data-cat":c.id,"aria-selected":String(ui.cat===c.id),"class":ui.cat===c.id?"on":""},esc(c.name)+' <span>'+n+'</span>');
+    b.addEventListener("click",function(){ ui.cat=c.id; saveUi(); renderCats(); applyCat(); });
+    catsEl.appendChild(b);
+  });
+}
+function applyCat(){
+  grid.querySelectorAll(".ex").forEach(function(c){ c.hidden = !(ui.cat==="all" || c.dataset.cat===ui.cat); });
+}
+
+/* ---------- exercise cards ---------- */
+function renderGrid(){
+  grid.innerHTML="";
+  EXERCISES.forEach(function(ex,i){ grid.appendChild(buildEx(ex,i)); });
+  applyCat();
+}
+function activeTab(ex){ var t=ui.tab[ex.id]; return (t && SUB[t] && EXOF[t]===ex) ? t : ex.subs[0].id; }
+function buildEx(ex,i){
+  var open=!!ui.open[ex.id];
+  var c=el("article",{"class":"card ex"+(open?" open":""),"data-ex":ex.id,"data-cat":ex.cat});
+  c.innerHTML=
+    '<button type="button" class="ex-head" aria-expanded="'+open+'">'+
+      '<span class="idx">'+(i+1)+'</span>'+
+      '<span class="ex-ttl"><h3>'+esc(ex.name)+'</h3><span class="ex-meta"></span></span>'+
+      '<span class="latest"></span>'+
+      '<span class="chev" aria-hidden="true">‹</span>'+
+    '</button>'+
+    '<div class="ex-body">'+
+      '<div class="subtabs" role="tablist" aria-label="תתי-תרגילים"></div>'+
+      '<form class="addsub" hidden>'+
+        '<div class="field"><label>שם תת-התרגיל</label><input type="text" class="tin add-name" maxlength="60" placeholder="למשל: דגש על 2 ו-4"></div>'+
+        '<div class="field"><label>סטיקינג (R / L, ‏> לדגש, r/l לתו חן)</label><input type="text" class="tin add-stick" maxlength="80" dir="ltr" placeholder="R>R L>L"></div>'+
+        '<div class="add-act"><button type="submit" class="btn primary sm">הוסף</button><button type="button" class="btn sm add-cancel">ביטול</button></div>'+
+      '</form>'+
+      '<div class="subpanels"></div>'+
+    '</div>';
+  var tabs=c.querySelector(".subtabs"), panels=c.querySelector(".subpanels"), cur=activeTab(ex);
+  allSubs(ex).forEach(function(s){
+    var t=el("button",{"type":"button","role":"tab","class":"subtab"+(s.id===cur?" on":""),"data-sub":s.id,"aria-selected":String(s.id===cur)},
+      '<span class="nm">'+esc(s.name)+'</span><span class="bd"></span>');
+    t.addEventListener("click",function(){ selectTab(ex,c,s.id); });
+    tabs.appendChild(t);
+    var p=buildSub(ex,s); p.hidden = s.id!==cur; panels.appendChild(p);
+  });
+  var addT=el("button",{"type":"button","class":"subtab add","aria-label":"הוסף תת-תרגיל"},"+ תת-תרגיל");
+  tabs.appendChild(addT);
+  var form=c.querySelector(".addsub");
+  addT.addEventListener("click",function(){ form.hidden=!form.hidden; if(!form.hidden) form.querySelector(".add-name").focus(); });
+  c.querySelector(".add-cancel").addEventListener("click",function(){ form.hidden=true; });
+  form.addEventListener("submit",function(e){ e.preventDefault(); addCustom(ex,c,form); });
+  c.querySelector(".ex-head").addEventListener("click",function(){ setOpen(ex,c,!c.classList.contains("open")); });
+  renderExHead(ex,c);
+  return c;
+}
+function setOpen(ex,c,open){
+  c.classList.toggle("open",open); c.querySelector(".ex-head").setAttribute("aria-expanded",String(open));
+  if(open) ui.open[ex.id]=1; else delete ui.open[ex.id]; saveUi();
+}
+function selectTab(ex,c,id){
+  ui.tab[ex.id]=id; saveUi();
+  c.querySelectorAll(".subtab[data-sub]").forEach(function(t){ var on=t.dataset.sub===id; t.classList.toggle("on",on); t.setAttribute("aria-selected",String(on)); });
+  c.querySelectorAll(".subp").forEach(function(p){ p.hidden = p.dataset.id!==id; });
+  renderExHead(ex,c);
+}
+function exCard(exId){ return grid.querySelector('.ex[data-ex="'+exId+'"]'); }
+function renderExHead(ex,c){
+  var subs=allSubs(ex), measured=subs.filter(function(s){ return entries(s.id).length; }).length;
+  c.querySelector(".ex-meta").textContent = subs.length+" תתי-תרגילים · "+measured+" נמדדו";
+  var cur=activeTab(ex), x=latestClean(cur), lt=c.querySelector(".latest");
+  lt.innerHTML = x ? '<span class="n">'+x.clean+'</span><span class="t">'+esc(SUB[cur].name)+'</span>' : '<span class="t">'+esc(SUB[cur].name)+'<br>אין מדידה</span>';
+  c.querySelectorAll(".subtab[data-sub]").forEach(function(t){
+    var y=latestClean(t.dataset.sub); t.querySelector(".bd").textContent = y ? y.clean : "";
+  });
+}
+function addCustom(ex,c,form){
+  var name=form.querySelector(".add-name").value.trim(), stick=form.querySelector(".add-stick").value.trim();
+  if(!name){ toast("תן שם לתת-התרגיל"); form.querySelector(".add-name").focus(); return; }
+  var id="c_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  if(!Array.isArray(state.custom[ex.id])) state.custom[ex.id]=[];
+  state.custom[ex.id].push({id:id,name:name,stick:stick,custom:true});
+  save(); indexSubs(); ui.tab[ex.id]=id; ui.open[ex.id]=1; saveUi();
+  rebuildEx(ex); renderSummary(); renderRoutine();
+  toast("תת-התרגיל \""+name+"\" נוסף ✓");
+}
+function deleteCustom(ex,s){
+  var n=entries(s.id).length;
+  if(!confirm("למחוק את תת-התרגיל \""+s.name+"\""+(n?" ואת "+n+" המדידות שלו":"")+"?")) return;
+  state.custom[ex.id]=customOf(ex.id).filter(function(x){ return x.id!==s.id; });
+  entries(s.id).forEach(function(x){ syncDelete(s.id,x); });
+  delete state.entries[s.id];
+  if(ui.tab[ex.id]===s.id) delete ui.tab[ex.id];
+  save(); saveUi(); indexSubs();
+  rebuildEx(ex); renderSummary(); renderRoutine();
+  toast("תת-התרגיל נמחק");
+}
+function rebuildEx(ex){
+  var old=exCard(ex.id), i=EXERCISES.indexOf(ex), n=buildEx(ex,i);
+  if(old) grid.replaceChild(n,old); else grid.appendChild(n);
+  applyCat();
+}
+
+function buildSub(ex,s){
+  var c=el("div",{"class":"subp","data-id":s.id,"role":"tabpanel"});
+  c.innerHTML =
+    '<div class="sp-main">'+
+      '<div class="card-head">'+
+        '<div style="min-width:0"><h4>'+esc(s.name)+(s.custom?' <span class="cbadge">שלי</span>':'')+'</h4><div class="stick">'+stickHTML(s)+'</div></div>'+
+        '<div class="latest"></div>'+
+      '</div>'+
+      '<div class="fields">'+
+        '<div class="field"><label>BPM נקי / טמפו העבודה</label><div class="numwrap"><button type="button" data-d="-5" data-t="clean" aria-label="הורד 5">−</button><input type="number" inputmode="numeric" min="20" max="400" class="in-clean" placeholder="BPM"><button type="button" data-d="5" data-t="clean" aria-label="הוסף 5">+</button></div></div>'+
+        '<div class="field"><label>BPM שבו נהיה קשה</label><div class="numwrap"><button type="button" data-d="-5" data-t="hard" aria-label="הורד 5">−</button><input type="number" inputmode="numeric" min="20" max="400" class="in-hard" placeholder="BPM"><button type="button" data-d="5" data-t="hard" aria-label="הוסף 5">+</button></div></div>'+
+      '</div>'+
+      '<div><div class="chips-lbl">איפה זה נשבר?</div><div class="chips">'+
+        BREAKS.map(function(b){return '<button type="button" class="chip" aria-pressed="false">'+esc(b)+'</button>';}).join("")+
+      '</div></div>'+
+      (ex.cat==="test" ? '<label class="sd-row">חלוקה:<select class="sd-sel in-subdiv"><option value="">לא צוין</option>'+SUBDIVS.map(function(v){return '<option>'+v+'</option>';}).join("")+'</select><span>חשוב להשוואת ימין/שמאל</span></label>' : '')+
+      '<textarea class="in-notes" rows="2" placeholder="הערות (תחושה, יציבה, מה לשפר...)"></textarea>'+
+      '<div class="card-actions">'+
+        '<button type="button" class="btn work-btn" title="אימון רגיל: נרשם ביומן כטמפו עבודה ולא משנה את המקסימום"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>טמפו עבודה היום</button>'+
+        '<button type="button" class="btn primary save-btn" title="מבחן אמיתי: הקצב הכי מהיר שניגנת נקי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg>מקסימום נקי (מדידה)</button>'+
+        '<button type="button" class="btn metro-btn" title="פתח מטרונום על ה-BPM הזה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3h8l3 18H5L8 3z"/><path d="M12 15l5-9"/></svg>למטרונום</button>'+
+        (s.custom?'<button type="button" class="btn del-sub" title="מחק תת-תרגיל" aria-label="מחק תת-תרגיל">🗑</button>':'')+
+      '</div>'+
+      '<div class="log-hint"><b>טמפו עבודה</b> = הקצב שהתאמנת בו היום (לא משנה את המקסימום) · <b>מקסימום נקי</b> = תוצאת מבחן אמיתי</div>'+
+    '</div>'+
+    '<div class="sp-side">'+
+      '<div class="chart"></div>'+
+      '<details class="hist"><summary></summary><ul></ul></details>'+
+    '</div>';
+  if(s.fixed){ c.querySelector(".in-clean").placeholder = String(s.fixed); }
+  c.querySelectorAll(".numwrap button").forEach(function(b){
+    b.addEventListener("click",function(){
+      var inp=c.querySelector(".in-"+b.dataset.t), lx=latest(s.id);
+      var cur=num(inp.value) || num(inp.placeholder) || (lx&&lx[b.dataset.t]) || 80;
+      inp.value=Math.max(20,Math.min(400,cur+parseInt(b.dataset.d,10)));
+    });
+  });
+  c.querySelectorAll(".chip").forEach(function(ch){
+    ch.addEventListener("click",function(){ var on=ch.classList.toggle("on"); ch.setAttribute("aria-pressed",on); });
+  });
+  c.querySelector(".save-btn").addEventListener("click",function(){ saveEntry(s,c,"max"); });
+  c.querySelector(".work-btn").addEventListener("click",function(){ saveEntry(s,c,"work"); });
+  c.querySelector(".metro-btn").addEventListener("click",function(){
+    var lc=latestClean(s.id);
+    var v=num(c.querySelector(".in-clean").value) || (lc&&lc.clean) || s.fixed || metro.bpm;
+    setBpm(v); document.querySelector(".metro").scrollIntoView({behavior:"smooth",block:"center"});
+    if(!metro.running) toggleMetro();
+    if(typeof markLive==="function") markLive();
+  });
+  var ds=c.querySelector(".del-sub"); if(ds) ds.addEventListener("click",function(){ deleteCustom(ex,s); });
+  renderSubPanel(s.id,c);
+  return c;
+}
+function subPanel(id){ return grid.querySelector('.subp[data-id="'+id+'"]'); }
+function addEntry(id,obj){
+  if(!Array.isArray(state.entries[id])) state.entries[id]=[];
+  state.entries[id].push(obj); save();
+  syncEntry(id,obj);
+  renderSub(id); renderSummary();
+}
+function saveEntry(s,c,kind){
+  var clean=num(c.querySelector(".in-clean").value);
+  var hard=num(c.querySelector(".in-hard").value);
+  var sdEl=c.querySelector(".in-subdiv"), subdiv=sdEl?sdEl.value:"";
+  if(kind==="work"){
+    if(!clean){ toast(hard?"טמפו עבודה נרשם בשדה הראשון (BPM נקי / טמפו העבודה)":"הזן את הקצב שבו התאמנת היום"); c.querySelector(".in-clean").focus(); return; }
+  } else if(!clean && !hard){ toast("הזן לפחות ערך BPM אחד"); c.querySelector(".in-clean").focus(); return; }
+  var broke=[].map.call(c.querySelectorAll(".chip.on"),function(x){return x.textContent;});
+  var notes=c.querySelector(".in-notes").value.trim();
+  c.querySelector(".in-clean").value=""; c.querySelector(".in-hard").value=""; c.querySelector(".in-notes").value="";
+  if(sdEl) sdEl.value="";
+  c.querySelectorAll(".chip.on").forEach(function(x){x.classList.remove("on");x.setAttribute("aria-pressed","false");});
+  var o = kind==="work"
+    ? {date:new Date().toISOString(), kind:"work", work:clean, clean:null, hard:null, broke:broke, notes:notes}
+    : {date:new Date().toISOString(), clean:clean, hard:hard, broke:broke, notes:notes};
+  if(subdiv) o.subdiv=subdiv;
+  addEntry(s.id,o);
+  toast(kind==="work" ? "טמפו עבודה נרשם: "+clean+" BPM\u200F (המקסימום לא השתנה)" : "המקסימום הנקי נשמר ✓");
+}
+function renderSub(id){
+  var p=subPanel(id); if(p) renderSubPanel(id,p);
+  var ex=EXOF[id], c=ex&&exCard(ex.id); if(c) renderExHead(ex,c);
+  if(typeof renderRoutineHints==="function") renderRoutineHints();
+}
+function renderSubPanel(id,c){
+  var e=entries(id), last=latestClean(id);
+  var lt=c.querySelector(".latest");
+  if(last){
+    var prev=null, li=e.lastIndexOf(last); for(var k=li-1;k>=0;k--){ if(e[k]&&e[k].clean){prev=e[k].clean;break;} }
+    var d="";
+    if(prev!=null){ var diff=last.clean-prev; if(diff) d='<div class="d '+(diff>0?"up":"down")+'">'+(diff>0?"▲ ":"▼ ")+Math.abs(diff)+'</div>'; }
+    lt.innerHTML='<div class="n">'+last.clean+'</div><div class="t">מקס נקי'+(subdivOf(last)?" · "+esc(subdivOf(last)):"")+'</div>'+d;
+  } else lt.innerHTML='<div class="t">אין מדידה</div>';
+  var lw=latestWork(id); if(lw) lt.insertAdjacentHTML("beforeend",'<div class="w">עבודה: '+lw.work+' · '+fmtDate(lw.date)+'</div>');
+  c.querySelector(".chart").innerHTML = chartSVG(e);
+  var sm=c.querySelector(".hist summary"), ul=c.querySelector(".hist ul");
+  var nw=e.filter(isWork).length;
+  sm.textContent = !e.length ? "אין עדיין היסטוריה" : nw ? "היסטוריה ("+(e.length-nw)+" מדידות · "+nw+" טמפו עבודה)" : "היסטוריה ("+e.length+" מדידות)";
+  ul.innerHTML="";
+  e.slice().reverse().forEach(function(x,ri){
+    var idx=e.length-1-ri;
+    var w=isWork(x), sd=subdivOf(x), li=el("li",w?{"class":"work"}:null);
+    li.innerHTML='<div class="h-bpm">'+(w ? '<span class="kind work">טמפו עבודה</span><b>'+(x.work||"—")+'</b> BPM'
+        : '<span class="kind max">מקס נקי</span>נקי: <b>'+(x.clean||"—")+'</b> · קשה: <b>'+(x.hard||"—")+'</b>')+(sd?' · '+esc(sd):'')+'</div>'+
+      '<div style="display:flex;gap:6px;align-items:center"><span class="h-date">'+fmtDate(x.date,true)+'</span><button class="del" title="מחק מדידה" aria-label="מחק מדידה">×</button></div>'+
+      (x.broke&&x.broke.length?'<div class="h-tags">'+x.broke.map(function(b){return '<span>'+esc(b)+'</span>';}).join("")+'</div>':"")+
+      (x.notes?'<div class="h-note">'+esc(x.notes)+'</div>':"");
+    li.querySelector(".del").addEventListener("click",function(){
+      if(!confirm("למחוק את המדידה מתאריך "+fmtDate(x.date,true)+"?")) return;
+      state.entries[id].splice(idx,1); save(); syncDelete(id,x); renderSub(id); renderSummary(); toast(w?"הרשומה נמחקה":"המדידה נמחקה");
+    });
+    ul.appendChild(li);
+  });
+}
+var chartN=0;
+function chartSVG(e){
+  var pts=e.filter(function(x){return x&&!isWork(x)&&(x.clean||x.hard);});
+  if(!pts.length) return '<div class="empty">הגרף יופיע אחרי המדידה הראשונה</div>';
+  var W=320,H=96,px=26,pt=12,pb=16, gid="ga"+(++chartN);
+  var vals=[]; pts.forEach(function(x){ if(x.clean) vals.push(x.clean); if(x.hard) vals.push(x.hard); });
+  var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+  if(mx-mn<10){ mn-=5; mx+=5; }
+  var pad=(mx-mn)*.12; mn=Math.max(0,mn-pad); mx+=pad;
+  var n=pts.length;
+  function X(i){ return n===1 ? W/2 : (W-px) - i*((W-2*px)/(n-1)); }
+  function Y(v){ return pt + (1-(v-mn)/(mx-mn))*(H-pt-pb); }
+  function line(key){ var p=[]; pts.forEach(function(x,i){ if(x[key]) p.push([X(i),Y(x[key])]); }); return p; }
+  var c=line("clean"), h=line("hard");
+  var s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="גרף BPM נקי לאורך זמן">';
+  s+='<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9f43" stop-opacity=".35"/><stop offset="1" stop-color="#ff9f43" stop-opacity="0"/></linearGradient></defs>';
+  [0,.5,1].forEach(function(f){ var y=pt+f*(H-pt-pb); var v=Math.round(mx-f*(mx-mn));
+    s+='<line x1="'+px+'" x2="'+(W-px)+'" y1="'+y+'" y2="'+y+'" stroke="#2e2930" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+    s+='<text x="'+(px-4)+'" y="'+(y+3)+'" fill="#6f6669" font-size="9" text-anchor="end">'+v+'</text>'; });
+  if(h.length>1) s+='<polyline points="'+h.map(function(p){return p.join(",");}).join(" ")+'" fill="none" stroke="#ff6b6b" stroke-opacity=".7" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>';
+  if(c.length>1){
+    s+='<polygon points="'+c[0][0]+','+(H-pb)+' '+c.map(function(p){return p.join(",");}).join(" ")+' '+c[c.length-1][0]+','+(H-pb)+'" fill="url(#'+gid+')"/>';
+    s+='<polyline points="'+c.map(function(p){return p.join(",");}).join(" ")+'" fill="none" stroke="#ff9f43" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
+  }
+  h.forEach(function(p){ s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.5" fill="#ff6b6b" fill-opacity=".8"/>'; });
+  c.forEach(function(p,i){ s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(i===c.length-1?4:3)+'" fill="#ff9f43" stroke="#151316" stroke-width="1.5"/>'; });
+  s+='<text x="'+(W-px)+'" y="'+(H-3)+'" fill="#6f6669" font-size="9" text-anchor="middle">'+fmtDate(pts[0].date)+'</text>';
+  if(n>1) s+='<text x="'+px+'" y="'+(H-3)+'" fill="#6f6669" font-size="9" text-anchor="middle">'+fmtDate(pts[n-1].date)+'</text>';
+  s+='</svg><div class="legend"><span><i style="background:#ff9f43"></i>BPM נקי</span><span><i style="background:#ff6b6b"></i>BPM קשה</span></div>';
+  return s;
+}
+renderCats(); renderGrid();
+function openSub(id){
+  var ex=EXOF[id]; if(!ex) return null;
+  if(ui.cat!=="all" && ui.cat!==ex.cat){ ui.cat=ex.cat; renderCats(); applyCat(); }
+  var c=exCard(ex.id); setOpen(ex,c,true); selectTab(ex,c,id);
+  return subPanel(id);
+}
+
+/* ---------- summary ---------- */
+function allSubIds(){ var a=[]; EXERCISES.forEach(function(ex){ allSubs(ex).forEach(function(s){ a.push(s.id); }); }); return a; }
+function computeSummary(){
+  var ids=allSubIds(), best=null, worst=null;
+  ids.forEach(function(id){ if(id==="dyn80") return; var x=latestClean(id); if(!x) return;
+    if(EXOF[id] && EXOF[id].cat==="test" && subdivOf(x)==="רבעים") return; // played in quarters – not comparable
+    if(!best||x.clean>best.v) best={id:id,v:x.clean,name:fullName(id)};
+    if(!worst||x.clean<worst.v) worst={id:id,v:x.clean,name:fullName(id)}; });
+  var gap=handGap();
+  var total=0, measured=0; ids.forEach(function(id){ var n=entries(id).length; total+=n; if(n) measured++; });
+  return {best:best,worst:worst,gap:gap,total:total,measured:measured,count:ids.length};
+}
+// left vs right hand: only compare max results played in the same subdivision
+function handGap(){
+  var lE=latestClean("singleL"), rE=latestClean("singleR");
+  if(!lE||!rE) return null;
+  // quarter-note results (e.g. the 240 ceiling) are never compared; otherwise both hands must share a subdivision
+  function pick(id){ var e=entries(id); for(var i=e.length-1;i>=0;i--){ var x=e[i]; if(x&&x.clean&&!isWork(x)&&subdivOf(x)!=="רבעים") return x; } return null; }
+  var l=pick("singleL"), r=pick("singleR");
+  if(l&&r&&sameSubdiv(l,r)) return {l:l.clean, r:r.clean, d:r.clean-l.clean, sub:subdivOf(l)||subdivOf(r), older:(l!==lE||r!==rE)};
+  return {na:true, l:lE.clean, r:rE.clean, lSub:subdivOf(lE)||"לא צוין", rSub:subdivOf(rE)||"לא צוין"};
+}
+function gapText(g){ return g.na ? "לא בר-השוואה – ימין "+g.r+" ("+g.rSub+") / שמאל "+g.l+" ("+g.lSub+"), צריך למדוד את שתי הידיים באותה חלוקה" : null; }
+function renderSummary(){
+  var s=computeSummary(), box=document.getElementById("summary");
+  function card(cls,icon,lbl,val,meta){ return '<div class="stat '+cls+'"><div class="lbl">'+icon+lbl+'</div><div class="val">'+val+'</div><div class="meta">'+meta+'</div></div>'; }
+  var gapVal="—", gapMeta="נדרשות מדידות ב„מבחנים”: יד ימין ויד שמאל בלבד";
+  if(s.gap && s.gap.na){ gapVal="לא בר-השוואה"; gapMeta="ימין "+s.gap.r+" ("+esc(s.gap.rSub)+") · שמאל "+s.gap.l+" ("+esc(s.gap.lSub)+") – למדוד באותה חלוקה"; }
+  else if(s.gap){
+    if(s.gap.d===0){ gapVal="אין פער"; }
+    else gapVal=Math.abs(s.gap.d)+" BPM לטובת "+(s.gap.d>0?"ימין":"שמאל");
+    gapMeta="ימין "+s.gap.r+" · שמאל "+s.gap.l+(s.gap.d!==0?" ("+Math.round(Math.abs(s.gap.d)/Math.max(s.gap.l,s.gap.r)*100)+"%)":"")+(s.gap.sub?" · "+esc(s.gap.sub):"")+(s.gap.older?" · לפי מדידות באותה חלוקה":"");
+  }
+  var two=s.worst&&s.best&&s.worst.id!==s.best.id;
+  box.innerHTML =
+    card("good","▲ ","התרגיל החזק",  s.best? esc(s.best.name) : "—", s.best? s.best.v+" BPM נקי" : "עדיין אין מדידות")+
+    card("bad","▼ ","התרגיל החלש",   two? esc(s.worst.name) : "—", two? s.worst.v+" BPM נקי" : "נדרשות לפחות שתי מדידות")+
+    card("gap","⇄ ","פער שמאל מול ימין", gapVal, gapMeta)+
+    card("","● ","התקדמות", s.measured+" / "+s.count+" נמדדו", s.total+" מדידות בסך הכול");
+  if(typeof renderGoals==="function") renderGoals();
+}
+renderSummary();
+
+/* ---------- copy summary ---------- */
+function buildTextSummary(){
+  var s=computeSummary(), lines=[], any=false;
+  lines.push("סיכום אבחון רודימנטים – "+new Date().toLocaleDateString("he-IL"));
+  CATS.forEach(function(cat){
+    if(cat.id==="all") return;
+    var catLines=[];
+    EXERCISES.filter(function(ex){ return ex.cat===cat.id; }).forEach(function(ex){
+      var sl=[];
+      allSubs(ex).forEach(function(sb){
+        var x=latestClean(sb.id), w=latestWork(sb.id); if(!x && !w) return;
+        var t;
+        if(x){
+          t="   • "+sb.name+": נקי "+x.clean+" BPM"+(x.hard?", קשה ב-"+x.hard+" BPM":"");
+          if(subdivOf(x)) t+=" ["+subdivOf(x)+"]";
+          if(x.broke&&x.broke.length) t+=" | נשבר ב: "+x.broke.join(", ");
+          t+=" ("+fmtDate(x.date)+")";
+          if(w) t+=" | טמפו עבודה אחרון: "+w.work+" ("+fmtDate(w.date)+")";
+        } else t="   • "+sb.name+": טמפו עבודה "+w.work+" BPM ("+fmtDate(w.date)+") – עדיין אין מדידת מקסימום";
+        sl.push(t);
+        if(x&&x.notes) sl.push("      הערות: "+x.notes.replace(/\n+/g," "));
+      });
+      if(sl.length){ catLines.push(ex.name+":"); catLines=catLines.concat(sl); }
+    });
+    if(catLines.length){ any=true; lines.push(""); lines.push("["+cat.name+"]"); lines=lines.concat(catLines); }
+  });
+  if(!any){ lines.push(""); lines.push("עדיין אין מדידות."); }
+  if(s.best||s.gap) lines.push("");
+  if(s.best) lines.push("הכי חזק: "+s.best.name+" ("+s.best.v+" BPM)");
+  if(s.worst&&s.best&&s.worst.id!==s.best.id) lines.push("הכי חלש: "+s.worst.name+" ("+s.worst.v+" BPM)");
+  if(s.gap) lines.push("פער ידיים: "+(s.gap.na ? gapText(s.gap) : "ימין "+s.gap.r+" / שמאל "+s.gap.l+(s.gap.d? " – הפרש של "+Math.abs(s.gap.d)+" BPM לטובת "+(s.gap.d>0?"ימין":"שמאל") : " – אין פער")+(s.gap.sub?" ("+s.gap.sub+")":"")));
+  var cnt={}; allSubIds().forEach(function(id){ var x=latest(id); if(x&&x.broke) x.broke.forEach(function(b){cnt[b]=(cnt[b]||0)+1;}); });
+  var top=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];});
+  if(top.length) lines.push("נקודות שבירה נפוצות: "+top.map(function(b){return b+" ("+cnt[b]+")";}).join(", "));
+  if(GOALS){
+    lines.push(""); lines.push("יעדים עד 30.10:");
+    GOALS.forEach(function(g){ var pr=goalProgress(g); lines.push("• "+g.name+": "+g.base+" ← "+g.target+" | עכשיו "+(pr.cur!=null?pr.cur:"—")+" ("+pr.pct+"%)"); });
+    var ws=weekStart(new Date()), c=0; for(var i=0;i<7;i++) if(plan.days[ymd(addDays(ws,i))]) c++;
+    lines.push("ימי תרגול השבוע: "+c+"/7 · רצף: "+streak());
+  }
+  return lines.join("\n");
+}
+function copyText(text){
+  function fallback(){
+    var ta=document.createElement("textarea"); ta.value=text; ta.setAttribute("readonly","");
+    ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select();
+    var ok=false; try{ ok=document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta); return ok;
+  }
+  if(navigator.clipboard && window.isSecureContext){
+    return navigator.clipboard.writeText(text).then(function(){return true;},function(){return fallback();});
+  }
+  return Promise.resolve(fallback());
+}
+document.getElementById("copyBtn").addEventListener("click",function(){
+  copyText(buildTextSummary()).then(function(ok){ toast(ok?"הסיכום הועתק – אפשר להדביק למנטור":"ההעתקה נכשלה"); });
+});
+
+/* ---------- export / import ---------- */
+document.getElementById("exportBtn").addEventListener("click",function(){
+  var payload={app:"rimon-rudiments",version:2,exported:new Date().toISOString(),data:state,plan:plan};
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="rudiments-"+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href); a.remove();},500);
+  toast("קובץ הנתונים הורד");
+});
+var fileIn=document.getElementById("importFile");
+document.getElementById("importBtn").addEventListener("click",function(){ fileIn.value=""; fileIn.click(); });
+fileIn.addEventListener("change",function(){
+  var f=fileIn.files&&fileIn.files[0]; if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var j=JSON.parse(rd.result), d=(isObj(j)&&isObj(j.data))?j.data:j;
+      if(!isObj(d)) throw 0;
+      var inc=migrate(d,true), n=0, nc=0;   // accepts both old (v1) and new (v2) exports
+      Object.keys(inc.entries).forEach(function(k){ n+=inc.entries[k].length; });
+      Object.keys(inc.custom).forEach(function(k){ nc+=inc.custom[k].length; });
+      if(!n && !nc) throw 0;
+      var replace=confirm("נמצאו "+n+" מדידות"+(nc?" ו-"+nc+" תתי-תרגילים אישיים":"")+" בקובץ.\n\nאישור = החלפת כל הנתונים הקיימים\nביטול = מיזוג עם הנתונים הקיימים");
+      if(replace){ state.entries=inc.entries; state.custom=inc.custom; }
+      else {
+        Object.keys(inc.entries).forEach(function(k){
+          var seen={}; entries(k).forEach(function(x){seen[x.date]=1;});
+          state.entries[k]=entries(k).concat(inc.entries[k].filter(function(x){return !seen[x.date];}))
+            .sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+        });
+        Object.keys(inc.custom).forEach(function(ex){
+          var have={}; customOf(ex).forEach(function(c){have[c.id]=1;});
+          state.custom[ex]=customOf(ex).concat(inc.custom[ex].filter(function(c){return !have[c.id];}));
+        });
+      }
+      save(); refreshAll(); syncFull(); if(typeof checkFix==="function") checkFix();
+      toast(replace?"הנתונים הוחלפו בהצלחה":"הנתונים מוזגו בהצלחה");
+    }catch(e){ toast("הקובץ אינו קובץ נתונים תקין"); }
+  };
+  rd.readAsText(f);
+});
+function refreshAll(){
+  indexSubs(); renderCats(); renderGrid(); renderSummary();
+  if(typeof renderRoutine==="function") renderRoutine();
+}
+
+/* ---------- metronome ---------- */
+var metro={bpm:80,running:false,meter:4,sub:1,ctx:null,next:0,tick:0,timer:null,queue:[]};
+try{ var ms=JSON.parse(localStorage.getItem(STORE_KEY+"-metro")||"{}"); if(ms.bpm) metro.bpm=ms.bpm; if(ms.meter) metro.meter=ms.meter; if(ms.sub) metro.sub=ms.sub; }catch(e){}
+var slider=document.getElementById("mSlider"), bpmEl=document.getElementById("mBpm"), beatsEl=document.getElementById("beats");
+function saveMetro(){ try{ localStorage.setItem(STORE_KEY+"-metro",JSON.stringify({bpm:metro.bpm,meter:metro.meter,sub:metro.sub})); }catch(e){} }
+function setBpm(v){
+  v=Math.max(30,Math.min(240,Math.round(v))); metro.bpm=v; slider.value=v; bpmEl.textContent=v;
+  slider.style.setProperty("--p",((v-30)/(240-30)*100)+"%"); saveMetro();
+}
+function buildBeats(){
+  beatsEl.innerHTML=""; for(var i=0;i<metro.meter;i++) beatsEl.appendChild(el("div",{"class":"beat"+(i===0?" first":"")}));
+}
+function segInit(id,key){
+  var seg=document.getElementById(id);
+  seg.querySelectorAll("button").forEach(function(b){
+    b.classList.toggle("on", +b.dataset.v===metro[key]);
+    b.addEventListener("click",function(){
+      metro[key]=+b.dataset.v; seg.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);});
+      if(key==="meter") buildBeats(); metro.tick=0; saveMetro();
+    });
+  });
+}
+segInit("meterSeg","meter"); segInit("subSeg","sub");
+slider.addEventListener("input",function(){ setBpm(+slider.value); });
+document.querySelectorAll(".metro .step").forEach(function(b){ b.addEventListener("click",function(){ setBpm(metro.bpm+parseInt(b.dataset.step,10)); }); });
+setBpm(metro.bpm); buildBeats();
+
+function click(time,level){ // level: 2 accent, 1 beat, 0 subdivision
+  var c=metro.ctx, o=c.createOscillator(), g=c.createGain();
+  o.type = level===2 ? "square" : "sine";
+  o.frequency.value = level===2 ? 1760 : (level===1 ? 1100 : 820);
+  var peak = level===2 ? 0.5 : (level===1 ? 0.38 : 0.16);
+  g.gain.setValueAtTime(0.0001,time);
+  g.gain.exponentialRampToValueAtTime(peak,time+0.001);
+  g.gain.exponentialRampToValueAtTime(0.0001,time+(level===2?0.06:0.04));
+  o.connect(g); g.connect(c.destination); o.start(time); o.stop(time+0.08);
+}
+function scheduler(){
+  var c=metro.ctx;
+  while(metro.next < c.currentTime+0.12){
+    var perBar=metro.meter*metro.sub, t=metro.tick%perBar;
+    var isBeat=t%metro.sub===0, beatIdx=Math.floor(t/metro.sub);
+    click(metro.next, t===0?2:(isBeat?1:0));
+    if(isBeat) metro.queue.push({time:metro.next,beat:beatIdx});
+    metro.next += 60/metro.bpm/metro.sub;
+    metro.tick++;
+  }
+}
+var lastBeat=-1;
+function draw(){
+  if(!metro.running) return;
+  var now=metro.ctx.currentTime, cur=null;
+  while(metro.queue.length && metro.queue[0].time<=now){ cur=metro.queue.shift(); }
+  if(cur){
+    var bs=beatsEl.children;
+    for(var i=0;i<bs.length;i++) bs[i].classList.toggle("on",i===cur.beat);
+    lastBeat=cur.beat;
+    setTimeout(function(){ if(bs[cur.beat]) bs[cur.beat].classList.remove("on"); }, Math.min(120,60000/metro.bpm/2));
+  }
+  requestAnimationFrame(draw);
+}
+var playBtn=document.getElementById("playBtn"), playIcon=document.getElementById("playIcon");
+var PLAY='<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/>';
+var STOP='<rect x="6" y="6" width="12" height="12" rx="2.5"/>';
+function ensureAudio(){
+  var AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC) return null;
+  if(!metro.ctx) metro.ctx=new AC();
+  if(metro.ctx.state==="suspended") metro.ctx.resume();
+  return metro.ctx;
+}
+function toggleMetro(){
+  if(!metro.running){
+    if(!ensureAudio()){ toast("הדפדפן לא תומך בשמע"); return; }
+    metro.running=true; metro.tick=0; metro.queue=[]; metro.next=metro.ctx.currentTime+0.06;
+    metro.timer=setInterval(scheduler,25); scheduler(); requestAnimationFrame(draw);
+    playBtn.classList.add("running"); playIcon.innerHTML=STOP;
+  } else {
+    metro.running=false; clearInterval(metro.timer);
+    playBtn.classList.remove("running"); playIcon.innerHTML=PLAY;
+    [].forEach.call(beatsEl.children,function(b){b.classList.remove("on");});
+  }
+}
+playBtn.addEventListener("click",toggleMetro);
+document.addEventListener("keydown",function(e){
+  var tag=(e.target.tagName||"").toLowerCase(); if(tag==="input"||tag==="textarea") return;
+  if(e.code==="Space"){ e.preventDefault(); toggleMetro(); }
+  else if(e.code==="KeyT" && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); toggleTimer(); }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); setBpm(metro.bpm+1); }
+  else if(e.key==="ArrowDown"){ e.preventDefault(); setBpm(metro.bpm-1); }
+});
+
+
+/* ---------- plan: tasks & goals ---------- */
+var PLAN_KEY = STORE_KEY+"-plan";
+var GOALS = [
+  {id:"flamL",  name:"פלאם יד שמאל", base:120, target:150},
+  {id:"drag",   name:"דראג",         base:90,  target:110},
+  {id:"double8",name:"דאבל סטרוק",   base:165, target:180}
+];
+var GOAL_DATE = new Date(2026,9,30);
+var MEASURE_DATES = [new Date(2026,9,18), new Date(2026,9,25)];
+var ROUTINE = [
+  {from:0, to:3,  title:"חימום – סינגל סטרוק", desc:"בשקט, ידיים רפויות", bpm:120, link:"single8"},
+  {from:3, to:10, title:"פלאם יד שמאל", desc:"ברבעים, עולים ב-5 אחרי דקה נקייה · כל 5 פלאמים שמאל – פלאם ימין אחד לתחושה", bpm:80, sub:1, link:"flamL"},
+  {from:10,to:16, title:"דאבל סטרוק", desc:"בשמיניות, הדגשה על המכה השנייה, ואז רגיל", bpm:100, sub:2, link:"d_acc2"},
+  {from:16,to:21, title:"דראג", desc:"קישוט שקט מאוד", bpm:70, link:"drag"},
+  {from:21,to:25, title:"פרדידל", desc:"הדגשות ברורות", bpm:180, link:"para8"}
+];
+var KIT = [
+  "גרוב רוק ב-85: 3 תיבות גרוב + חצי תיבה מעבר סינגל שש-עשריות, 2 מכות לכל תוף מהסנר לפלור",
+  "אותו דבר עם פרדידל והדגשות על הטומים",
+  "חזרה לגרוב עם בס תוף על 1, עולים ב-5 רק אחרי 5 פעמים נקיות ברצף",
+  "להקליט בטלפון ולשלוח למאסטרו"
+];
+var DAY_LETTERS=["א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ש׳"];
+var CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+var PLAYSM='<svg viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>';
+var plan = loadPlan();
+function loadPlan(){
+  var p={};
+  try{ p=JSON.parse(localStorage.getItem(PLAN_KEY)||"{}")||{}; }catch(e){ p={}; }
+  if(typeof p!=="object"||Array.isArray(p)) p={};
+  ["days","steps","kit","sessions","routine"].forEach(function(k){ if(!p[k]||typeof p[k]!=="object"||Array.isArray(p[k])) p[k]={}; });
+  if(p.log!==undefined && !Array.isArray(p.log)) delete p.log; // practice-session log (synced to the "סשנים" tab)
+  return p;
+}
+function savePlan(){ try{ localStorage.setItem(PLAN_KEY, JSON.stringify(plan)); }catch(e){ toast("לא ניתן לשמור בדפדפן הזה"); } syncTouch(); }
+function ymd(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+function dayStart(d){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+function addDays(d,n){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n); }
+function weekStart(d){ d=dayStart(d); return addDays(d,-d.getDay()); } // Sunday
+function dm(d){ return d.getDate()+"."+(d.getMonth()+1); }
+function goalProgress(g){
+  var x=latestClean(g.id), cur=x?x.clean:null;
+  var p = cur==null ? 0 : (cur-g.base)/(g.target-g.base);
+  p=Math.max(0,Math.min(1,p));
+  return {cur:cur, entry:x, pct:Math.round(p*100)};
+}
+function renderGoals(){
+  var box=document.getElementById("goals"); if(!box||!GOALS) return;
+  box.innerHTML="";
+  GOALS.forEach(function(g){
+    var pr=goalProgress(g), done=pr.cur!=null&&pr.cur>=g.target;
+    var d=el("div",{"class":"goal"+(done?" done":""),"data-goal":g.id});
+    var foot;
+    if(pr.cur==null) foot='<span>עדיין אין מדידה בכרטיס</span><span>חסרים <b>'+(g.target-g.base)+'</b> BPM</span>';
+    else foot='<span>אחרון: <b>'+pr.cur+'</b> BPM · '+fmtDate(pr.entry.date)+'</span>'+
+      (done?'<span style="color:var(--good);font-weight:700">היעד הושג ✓</span>':'<span>עוד <b>'+Math.max(0,g.target-pr.cur)+'</b> BPM</span>');
+    d.innerHTML='<div class="goal-top"><div><h3>'+esc(g.name)+'</h3><div class="gk">יעד עד 30.10 · '+esc(fullName(g.id))+'</div></div><div class="pct">'+pr.pct+'%</div></div>'+
+      '<div class="goal-path"><span class="b">'+g.base+'</span><span class="arr">←</span><span class="t">'+g.target+'</span><span class="u">BPM</span></div>'+
+      '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pr.pct+'" aria-label="התקדמות '+esc(g.name)+'"><i style="width:'+pr.pct+'%"></i></div>'+
+      '<div class="goal-foot">'+foot+'</div>';
+    box.appendChild(d);
+  });
+}
+function renderHeadPills(){
+  var today=dayStart(new Date());
+  var left=Math.round((GOAL_DATE-today)/864e5);
+  document.getElementById("daysLeft").textContent = left>1 ? "עוד "+left+" ימים ליעד" : left===1 ? "מחר יום היעד" : left===0 ? "היום יום היעד!" : "תאריך היעד עבר";
+  var nx=null; MEASURE_DATES.forEach(function(m){ if(!nx && m>=today) nx=m; });
+  document.getElementById("nextMeasure").textContent = nx ? "מדידה הבאה: יום ראשון "+dm(nx) : "מדידה שבועית: כל יום ראשון";
+}
+/* routine */
+function setSub(v){
+  var seg=document.getElementById("subSeg"), b=seg.querySelector('button[data-v="'+v+'"]');
+  if(b && metro.sub!==v) b.click();
+}
+function clampBpm(v){ return Math.max(30,Math.min(240,Math.round(v))); }
+function stepCfg(i){ var o=plan.routine[i]; return isObj(o)?o:{}; }
+function stepBpm(i){ var v=num(stepCfg(i).bpm); return v?clampBpm(v):ROUTINE[i].bpm; }
+function stepLink(i){ var l=stepCfg(i).link; if(l==="") return ""; return (l&&SUB[l])?l:ROUTINE[i].link; }
+function setStepCfg(i,k,v){ var o=stepCfg(i); o[k]=v; plan.routine[i]=o; savePlan(); }
+function linkOptions(sel){
+  var h='<option value=""'+(sel===""?" selected":"")+'>ללא קישור</option>';
+  CATS.forEach(function(cat){ if(cat.id==="all") return;
+    EXERCISES.filter(function(ex){return ex.cat===cat.id;}).forEach(function(ex){
+      h+='<optgroup label="'+esc(ex.name)+'">';
+      allSubs(ex).forEach(function(s){ h+='<option value="'+esc(s.id)+'"'+(s.id===sel?" selected":"")+'>'+esc(s.name)+'</option>'; });
+      h+='</optgroup>';
+    });
+  });
+  return h;
+}
+function setStepBpm(i,v){
+  v=clampBpm(v); setStepCfg(i,"bpm",v);
+  var li=document.querySelector('#routine li[data-step="'+i+'"]'); if(li){ li.querySelector(".st-bpm").value=v; li.querySelector(".go .gb").textContent=v; li.querySelector(".go").title="הפעל מטרונום ב-"+v; }
+  if(typeof tm!=="undefined" && tm && tm.routine && tm.routine.idx===i){ setBpm(v); renderTimer(); }
+  markLive();
+}
+function renderRoutineHints(){
+  document.querySelectorAll("#routine li").forEach(function(li){
+    var i=+li.dataset.step, l=stepLink(i), h=li.querySelector(".st-hint"), x=l&&latestClean(l), w=l&&latestWork(l);
+    h.innerHTML = !l ? "" : (x ? 'מקס נקי: <b>'+x.clean+'</b>' : "מקס: עדיין לא נמדד")+(w ? ' · <span class="w">עבודה: '+w.work+'</span>' : "");
+    li.querySelector(".st-work").disabled=!l;
+  });
+}
+function renderRoutine(){
+  var ol=document.getElementById("routine"), key=ymd(new Date());
+  var done=Array.isArray(plan.steps[key])?plan.steps[key]:[];
+  ol.innerHTML="";
+  ROUTINE.forEach(function(s,i){
+    var on=done.indexOf(i)>=0, bpm=stepBpm(i);
+    var li=el("li",{"class":on?"done":"","data-step":i});
+    li.innerHTML='<button type="button" class="tick" aria-pressed="'+on+'" aria-label="סמן שלב '+(i+1)+' כבוצע">'+CHECK+'</button>'+
+      '<div style="min-width:0"><div class="st-title"><span class="st-time">'+s.from+'–'+s.to+' דק\'</span>'+esc(s.title)+'</div><div class="st-desc">'+esc(s.desc)+'</div>'+
+        '<div class="st-ctl">'+
+          '<div class="numwrap sm"><button type="button" data-sd="-5" aria-label="הורד 5 BPM">−</button><input type="number" inputmode="numeric" min="30" max="240" class="st-bpm" value="'+bpm+'" aria-label="BPM לשלב '+(i+1)+'"><button type="button" data-sd="5" aria-label="הוסף 5 BPM">+</button></div>'+
+          '<select class="st-link" aria-label="תת-תרגיל מקושר לשלב '+(i+1)+'">'+linkOptions(stepLink(i))+'</select>'+
+          '<span class="st-hint"></span>'+
+          '<button type="button" class="st-work" title="רושם את הקצב של השלב כטמפו עבודה של היום בתת-התרגיל המקושר – לא נחשב כמקסימום. מקסימום נרשם רק בכרטיס התרגיל, אחרי מבחן.">רשום כטמפו עבודה</button>'+
+        '</div>'+
+      '</div>'+
+      '<button type="button" class="go" title="הפעל מטרונום ב-'+bpm+'">'+PLAYSM+'<span class="gb">'+bpm+'</span> BPM</button>';
+    li.querySelector(".tick").addEventListener("click",function(){
+      var arr=Array.isArray(plan.steps[key])?plan.steps[key]:[], k=arr.indexOf(i);
+      if(k>=0) arr.splice(k,1); else arr.push(i);
+      plan.steps[key]=arr;
+      if(arr.length===ROUTINE.length && !plan.days[key]){ plan.days[key]=1; renderWeek(); toast("כל השגרה הושלמה – היום סומן כיום תרגול ✓");
+        logSession("שגרה – סימון ידני", ROUTINE[ROUTINE.length-1].to, ROUTINE.map(function(r,j){ return stepLine(j); }).join(" | "), ""); }
+      savePlan(); renderRoutine();
+    });
+    var inp=li.querySelector(".st-bpm");
+    li.querySelectorAll("[data-sd]").forEach(function(b){ b.addEventListener("click",function(){ setStepBpm(i,(num(inp.value)||stepBpm(i))+parseInt(b.dataset.sd,10)); }); });
+    inp.addEventListener("change",function(){ var v=num(inp.value); if(v) setStepBpm(i,v); else inp.value=stepBpm(i); });
+    inp.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
+    li.querySelector(".st-link").addEventListener("change",function(e){ setStepCfg(i,"link",e.target.value); renderRoutineHints(); });
+    li.querySelector(".st-work").addEventListener("click",function(){
+      var l=stepLink(i); if(!l) return; var v=stepBpm(i);
+      addEntry(l,{date:new Date().toISOString(),kind:"work",work:v,clean:null,hard:null,broke:[],notes:"מהשגרה היומית ("+s.title+")"});
+      toast("טמפו עבודה נרשם: "+fullName(l)+" · "+v+" BPM\u200F (לא מקסימום)");
+    });
+    li.querySelector(".go").addEventListener("click",function(){
+      var v=stepBpm(i);
+      setBpm(v); if(s.sub) setSub(s.sub);
+      if(!metro.running) toggleMetro();
+      var tset=(typeof tm!=="undefined"&&tm)?timerFromStep(i):false;
+      markLive(); toast("מטרונום: "+s.title+" · "+v+" BPM\u200F"+(tset?" · טיימר "+(s.to-s.from)+" דק'":""));
+    });
+    ol.appendChild(li);
+  });
+  renderRoutineHints();
+  if(typeof markRoutineCur==="function") markRoutineCur();
+  Object.keys(plan.steps).forEach(function(k){ if(k<ymd(addDays(new Date(),-14))) delete plan.steps[k]; });
+  document.getElementById("routineSum").textContent = "היום: "+done.length+" / "+ROUTINE.length+" שלבים הושלמו";
+  markLive();
+}
+function markLive(){
+  document.querySelectorAll("#routine li").forEach(function(li){
+    li.querySelector(".go").classList.toggle("live", metro.running && metro.bpm===stepBpm(+li.dataset.step));
+  });
+}
+/* week strip */
+var wkOffset=0;
+function streak(){
+  var d=dayStart(new Date()), n=0;
+  if(!plan.days[ymd(d)]) d=addDays(d,-1);
+  while(plan.days[ymd(d)]){ n++; d=addDays(d,-1); }
+  return n;
+}
+function renderWeek(){
+  var box=document.getElementById("week"), today=dayStart(new Date());
+  var ws=addDays(weekStart(today),7*wkOffset), cnt=0;
+  box.innerHTML="";
+  for(var i=0;i<7;i++){
+    (function(d){
+      var k=ymd(d), on=!!plan.days[k], fut=d>today;
+      if(on) cnt++;
+      var cls="day"+(on?" on":"")+(+d===+today?" today":"")+(d.getDay()===0?" sun":"");
+      var b=el("button",{"type":"button","class":cls,"data-date":k,"aria-pressed":String(on),"aria-label":"יום "+DAY_LETTERS[d.getDay()]+" "+dm(d)+(on?" – תורגל":"")});
+      if(fut) b.disabled=true;
+      b.innerHTML='<span class="dn">'+DAY_LETTERS[d.getDay()]+'</span><span class="dd">'+dm(d)+'</span><span class="dc">'+CHECK+'</span>';
+      b.addEventListener("click",function(){
+        if(plan.days[k]) delete plan.days[k]; else plan.days[k]=1;
+        savePlan(); renderWeek();
+      });
+      box.appendChild(b);
+    })(addDays(ws,i));
+  }
+  document.getElementById("wkRange").textContent = wkOffset===0 ? "השבוע" : dm(ws)+"–"+dm(addDays(ws,6));
+  document.getElementById("wkNext").disabled = wkOffset>=0;
+  var s=streak();
+  document.getElementById("streakN").textContent=s;
+  document.getElementById("streakU").textContent= s===1?"יום":"ימים";
+  document.getElementById("wkCount").innerHTML='<b style="color:var(--text)">'+cnt+'</b> / 7 ימים '+(wkOffset===0?"השבוע":"בשבוע הזה")+' · יעד 5–6'+(cnt>=5?' <span style="color:var(--good)">✓</span>':'');
+}
+document.getElementById("wkPrev").addEventListener("click",function(){ wkOffset--; renderWeek(); });
+document.getElementById("wkNext").addEventListener("click",function(){ if(wkOffset<0){ wkOffset++; renderWeek(); } });
+/* kit tasks (per week) */
+function renderKit(){
+  var wk=ymd(weekStart(new Date())), done=Array.isArray(plan.kit[wk])?plan.kit[wk]:[];
+  var ul=document.getElementById("kit"); ul.innerHTML="";
+  KIT.forEach(function(t,i){
+    var on=done.indexOf(i)>=0;
+    var li=el("li",{"class":on?"on":"","role":"checkbox","aria-checked":String(on),"tabindex":"0"});
+    li.innerHTML='<span class="box">'+CHECK+'</span><span class="tx">'+esc(t)+'</span>';
+    function tog(){ var a=Array.isArray(plan.kit[wk])?plan.kit[wk]:[], k=a.indexOf(i); if(k>=0) a.splice(k,1); else a.push(i); plan.kit[wk]=a; savePlan(); renderKit(); }
+    li.addEventListener("click",tog);
+    li.addEventListener("keydown",function(e){ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); e.stopPropagation(); tog(); } });
+    ul.appendChild(li);
+  });
+  document.getElementById("kitCount").textContent = done.length+" / "+KIT.length+" השבוע";
+  var ss=document.getElementById("sess"), n=+plan.sessions[wk]||0;
+  ss.innerHTML='<span>סשנים השבוע:</span>';
+  for(var j=1;j<=3;j++){
+    (function(j){
+      var b=el("button",{"type":"button","class":(j<=n?"on":"")+(j===3?" opt":""),"aria-label":"סשן "+j,"aria-pressed":String(j<=n)},String(j));
+      b.addEventListener("click",function(){ plan.sessions[wk]= (n===j? j-1 : j); savePlan(); renderKit(); });
+      ss.appendChild(b);
+    })(j);
+  }
+  ss.appendChild(el("span",{"style":"color:var(--dim)"}, n>=2?'<span style="color:var(--good)">✓ עמדת ביעד</span>':"יעד 2–3"));
+}
+/* upcoming */
+function renderUpcoming(){
+  var today=dayStart(new Date()), box=document.getElementById("upcoming");
+  var CAL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+  var RE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
+  var FLAG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>';
+  var items=[{ic:RE,t:"בדיקה חוזרת: סינגל יד אחת בשמיניות",s:"נמדד ברבעים (240) – למדוד ב„מבחנים”: יד שמאל / יד ימין בלבד"}];
+  var nextMarked=false;
+  MEASURE_DATES.forEach(function(m){
+    var past=m<today, nx=!past&&!nextMarked; if(nx) nextMarked=true;
+    items.push({ic:CAL,t:"מדידה שבועית: יום ראשון "+dm(m),s:"מודדים את תתי-התרגילים העיקריים ומדביקים סיכום למאסטרו",past:past,next:nx,tag:nx?(+m===+today?"היום":"הבאה"):""});
+  });
+  items.push({ic:FLAG,t:"יעד: 30.10",s:"פלאם שמאל 150 · דראג 110 · דאבל 180",past:GOAL_DATE<today});
+  box.innerHTML=items.map(function(x){
+    return '<div class="up-item'+(x.next?" next":"")+(x.past?" past":"")+'"><span class="ui">'+x.ic+'</span><div><div>'+esc(x.t)+'</div><div class="us">'+esc(x.s)+'</div></div>'+(x.tag?'<span class="tag">'+x.tag+'</span>':"")+'</div>';
+  }).join("");
+}
+/* collapse */
+var planEl=document.getElementById("plan"), planTg=document.getElementById("planToggle");
+function applyCollapse(){ var c=!!plan.collapsed; planEl.classList.toggle("collapsed",c); planTg.textContent=c?"הצג":"הסתר"; planTg.setAttribute("aria-expanded",String(!c)); }
+planTg.addEventListener("click",function(){ plan.collapsed=!plan.collapsed; savePlan(); applyCollapse(); });
+playBtn.addEventListener("click",markLive);
+document.addEventListener("keydown",function(e){ if(e.code==="Space") setTimeout(markLive,0); });
+slider.addEventListener("input",markLive);
+document.querySelectorAll(".metro .step").forEach(function(b){ b.addEventListener("click",markLive); });
+
+function renderPlan(){ renderHeadPills(); renderGoals(); renderRoutine(); renderWeek(); renderKit(); renderUpcoming(); applyCollapse(); }
+renderPlan();
+// re-render at midnight-ish when tab stays open
+document.addEventListener("visibilitychange",function(){ if(!document.hidden){ renderHeadPills(); renderRoutine(); renderWeek(); renderKit(); renderUpcoming(); } });
+
+/* ---------- timer + full routine ---------- */
+var TIMER_KEY = STORE_KEY+"-timer";
+var MIN=60000, RING_C=2*Math.PI*52;
+var tm={dur:5*MIN, left:5*MIN, endAt:0, running:false, withMetro:true, routine:null, label:"", iv:null, chimes:[]};
+try{ var tp=JSON.parse(localStorage.getItem(TIMER_KEY)||"{}")||{};
+  if(tp.min>=1 && tp.min<=99){ tm.dur=tm.left=Math.round(tp.min)*MIN; }
+  if(typeof tp.withMetro==="boolean") tm.withMetro=tp.withMetro; }catch(e){}
+function saveTimerPrefs(){ try{ localStorage.setItem(TIMER_KEY,JSON.stringify({min:Math.round(tm.manualDur()/MIN),withMetro:tm.withMetro})); }catch(e){} }
+tm.manual=tm.dur; tm.manualDur=function(){ return tm.manual; };
+var $t=function(id){ return document.getElementById(id); };
+var tEl=$t("timer"), tTime=$t("tTime"), tLbl=$t("tLbl"), tProg=$t("tProg"), tStart=$t("tStart"), tWith=$t("tWithMetro"), tRt=$t("tRt");
+tProg.style.strokeDasharray=RING_C.toFixed(2);
+tWith.checked=tm.withMetro;
+var BASE_TITLE=document.title;
+
+function stepDur(i){ return (ROUTINE[i].to-ROUTINE[i].from)*MIN; }
+function subName(v){ return v===2?"שמיניות":(v===4?"שש-עשריות":"רבעים"); }
+function fmtMS(ms){ var t=Math.max(0,Math.ceil(ms/1000)), m=Math.floor(t/60), sec=t%60; return (m<10?"0":"")+m+":"+(sec<10?"0":"")+sec; }
+function timerLeft(){ return tm.running ? Math.max(0,tm.endAt-Date.now()) : tm.left; }
+function metroOn(on){ if(!!metro.running!==on){ toggleMetro(); markLive(); } }
+
+function chime(kind){
+  tm.chimes.push(kind);
+  var c=ensureAudio(); if(!c) return;
+  var notes = kind==="done" ? [784,988,1175,1568] : kind==="step" ? [988,1319] : [1319,988,784];
+  var gap = kind==="done" ? 0.16 : 0.22, t0=c.currentTime+0.03;
+  var out=c.createGain(); out.gain.value=0.9; out.connect(c.destination);
+  notes.forEach(function(f,i){
+    var t=t0+i*gap;
+    [[1,0.20],[2.01,0.05],[3.0,0.02]].forEach(function(h){ // soft bell: fundamental + faint partials
+      var o=c.createOscillator(), g=c.createGain();
+      o.type="sine"; o.frequency.value=f*h[0];
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(h[1],t+0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+(kind==="done"&&i===notes.length-1?2.2:1.4));
+      o.connect(g); g.connect(out); o.start(t); o.stop(t+2.4);
+    });
+  });
+}
+var flashT;
+function flash(){
+  var m=document.querySelector(".metro"); m.classList.remove("flash"); void m.offsetWidth; m.classList.add("flash");
+  clearTimeout(flashT); flashT=setTimeout(function(){ m.classList.remove("flash"); },2200);
+}
+
+// UI refresh every 200ms + a one-shot timeout aimed at the exact end time
+// (a one-shot is not subject to Chrome's intensive throttling of chained timers in hidden tabs)
+function armEnd(){ clearTimeout(tm.endTO); if(tm.running) tm.endTO=setTimeout(timerCheck,Math.max(0,tm.endAt-Date.now())+15); }
+function ensureLoop(){ if(!tm.iv) tm.iv=setInterval(timerCheck,200); armEnd(); }
+function stopLoop(){ if(tm.iv){ clearInterval(tm.iv); tm.iv=null; } clearTimeout(tm.endTO); }
+
+function startTimer(){
+  if(tm.running) return;
+  if(tm.left<=0){ tm.left=tm.dur; }
+  ensureAudio();
+  tm.endAt=Date.now()+tm.left; tm.running=true;
+  if(tm.routine || tm.withMetro) metroOn(true);
+  ensureLoop(); renderTimer();
+}
+function pauseTimer(){
+  if(!tm.running) return;
+  tm.left=timerLeft(); tm.running=false; stopLoop();
+  if(tm.routine || tm.withMetro) metroOn(false);
+  renderTimer();
+}
+function toggleTimer(){ if(tm.running) pauseTimer(); else startTimer(); }
+function resetTimer(){
+  if(tm.routine){ stopRoutine(); return; }
+  var was=tm.running; tm.running=false; stopLoop(); tm.left=tm.dur;
+  if(was && tm.withMetro) metroOn(false);
+  renderTimer();
+}
+function setDuration(ms,label){
+  tm.dur=ms; tm.left=ms; tm.label=label||"";
+  if(tm.running){ tm.endAt=Date.now()+ms; armEnd(); }
+  renderTimer();
+}
+function adjustTimer(delta){
+  if(tm.routine) return;
+  var fresh=!tm.running && tm.left===tm.dur;
+  if(fresh){ tm.manual=Math.max(MIN,Math.min(99*MIN,tm.dur+delta)); setDuration(tm.manual,tm.label); saveTimerPrefs(); return; }
+  var r=Math.max(1000,Math.min(99*MIN,timerLeft()+delta));
+  if(tm.running){ tm.endAt=Date.now()+r; armEnd(); } else tm.left=r;
+  if(r>tm.dur) tm.dur=r;
+  renderTimer();
+}
+function timerFromStep(i){
+  if(tm.routine) return false;
+  tm.running=false; stopLoop();
+  setDuration(stepDur(i),ROUTINE[i].title);
+  return true;
+}
+function timerCheck(){
+  if(!tm.running){ renderTimer(); return; }
+  var r=tm.endAt-Date.now();
+  if(r>0){ renderTimer(); return; }
+  if(tm.routine){
+    // step(s) ended — advance using timestamps so a backgrounded tab catches up correctly
+    var over=-r, i=tm.routine.idx;
+    tm.routine.done.push(i);
+    while(true){
+      i++;
+      if(i>=ROUTINE.length){ finishRoutine(); return; }
+      var d=stepDur(i);
+      if(over<d){ applyStep(i); tm.endAt=Date.now()+(d-over); tm.left=d-over; armEnd(); break; }
+      tm.routine.done.push(i); over-=d;
+    }
+    chime("step"); flash(); toast("שלב "+(i+1)+": "+ROUTINE[i].title+" · "+stepBpm(i)+" BPM\u200F");
+    renderTimer(); return;
+  }
+  tm.running=false; tm.left=0; stopLoop();
+  logSession("טיימר", Math.round(tm.dur/MIN), (tm.label||"טיימר חופשי")+(tm.withMetro?" @ "+metro.bpm+" BPM ("+subName(metro.sub)+")":""), "");
+  if(tm.withMetro) metroOn(false);
+  chime("end"); flash(); toast("הזמן נגמר ⏱");
+  renderTimer();
+}
+
+/* routine mode */
+function applyStep(i){
+  var s=ROUTINE[i];
+  tm.routine.idx=i; tm.dur=stepDur(i); tm.label=s.title;
+  setBpm(stepBpm(i)); setSub(s.sub||1); markLive(); markRoutineCur();
+}
+function startRoutine(){
+  if(tm.routine) return;
+  tm.running=false; stopLoop();
+  tm.routine={idx:0, done:[], skipped:[]};
+  applyStep(0); tm.left=tm.dur;
+  startTimer();
+  toast("השגרה התחילה · "+ROUTINE[0].title+" · "+stepBpm(0)+" BPM\u200F");
+}
+function skipStep(){
+  if(!tm.routine) return;
+  var i=tm.routine.idx; tm.routine.skipped.push(i);
+  if(i+1>=ROUTINE.length){ finishRoutine(); return; }
+  applyStep(i+1); tm.left=tm.dur;
+  if(tm.running){ tm.endAt=Date.now()+tm.dur; armEnd(); }
+  chime("step"); renderTimer();
+}
+function stopRoutine(){
+  if(!tm.routine) return;
+  var rt=tm.routine, doneIdx=rt.done.filter(function(i){ return rt.skipped.indexOf(i)<0; });
+  var curMs=Math.max(0,tm.dur-timerLeft()), mins=doneIdx.reduce(function(a,i){ return a+stepDur(i); },0)+curMs;
+  if(mins>=MIN){
+    var st=doneIdx.map(stepLine); if(curMs>=MIN) st.push(stepLine(rt.idx)+" (חלקי, "+Math.round(curMs/MIN)+" דק')");
+    logSession("שגרה – נעצרה באמצע", Math.round(mins/MIN), st.join(" | "), rt.skipped.length?"דולגו: "+rt.skipped.map(function(i){return ROUTINE[i].title;}).join(", "):"");
+  }
+  tm.routine=null; tm.running=false; stopLoop();
+  metroOn(false);
+  tm.dur=tm.left=tm.manual; tm.label="";
+  markRoutineCur(); renderTimer(); toast("השגרה נעצרה");
+}
+function finishRoutine(){
+  var rt=tm.routine, key=ymd(new Date());
+  var arr=Array.isArray(plan.steps[key])?plan.steps[key]:[];
+  rt.done.forEach(function(i){ if(rt.skipped.indexOf(i)<0 && arr.indexOf(i)<0) arr.push(i); });
+  arr.sort(); plan.steps[key]=arr;
+  var full=arr.length===ROUTINE.length, newDay=full && !plan.days[key];
+  if(newDay) plan.days[key]=1;
+  var ran=rt.done.filter(function(i){ return rt.skipped.indexOf(i)<0; });
+  logSession(rt.skipped.length?"שגרה חלקית":"שגרה מלאה", Math.round(ran.reduce(function(a,i){ return a+stepDur(i); },0)/MIN),
+    ran.map(stepLine).join(" | "), rt.skipped.length?"דולגו: "+rt.skipped.map(function(i){return ROUTINE[i].title;}).join(", "):"");
+  savePlan(); renderRoutine(); renderWeek();
+  tm.routine=null; tm.running=false; stopLoop(); tm.left=0; tm.dur=tm.manual; tm.label="השגרה הושלמה";
+  metroOn(false);
+  chime("done"); flash();
+  toast(full ? "השגרה הושלמה! כל 5 השלבים סומנו"+(newDay?" והיום סומן כיום תרגול ✓":" ✓") : "השגרה הסתיימה – שלבים שדולגו לא סומנו");
+  markRoutineCur(); renderTimer();
+}
+function markRoutineCur(){
+  if(typeof tm==="undefined"||!tm) return;
+  document.querySelectorAll("#routine li").forEach(function(li){ li.classList.toggle("cur", !!tm.routine && +li.dataset.step===tm.routine.idx); });
+}
+
+/* render */
+var segsEl=$t("rtSegs");
+ROUTINE.forEach(function(){ segsEl.appendChild(el("i",{},"<b></b>")); });
+[].forEach.call(segsEl.children,function(x,i){ x.style.flex=String(ROUTINE[i].to-ROUTINE[i].from); });
+function renderTimer(){
+  var left=timerLeft(), rt=tm.routine;
+  var frac=tm.dur>0 ? left/tm.dur : 0;
+  tTime.textContent=fmtMS(left);
+  tProg.style.strokeDashoffset=(RING_C*(1-Math.max(0,Math.min(1,frac)))).toFixed(2);
+  var lbl = rt ? "שלב "+(rt.idx+1)+"/"+ROUTINE.length
+    : (left<=0 ? (tm.label||"הזמן נגמר") : tm.running ? (tm.label||"פועל") : (left<tm.dur ? "מושהה" : (tm.label||"טיימר")));
+  tLbl.textContent=lbl;
+  tEl.classList.toggle("run",tm.running); tEl.classList.toggle("done",!tm.running && left<=0);
+  tStart.textContent = tm.running ? "השהה" : (left>0 && left<tm.dur ? "המשך" : "התחל");
+  document.querySelectorAll("#tPresets .chip").forEach(function(b){ b.disabled=!!rt; b.classList.toggle("on", !rt && tm.dur===(+b.dataset.min)*MIN); });
+  document.querySelectorAll("#tPresets .tstep").forEach(function(b){ b.disabled=!!rt; });
+  tRt.classList.toggle("active",!!rt);
+  if(rt){
+    var s=ROUTINE[rt.idx], tot=left;
+    for(var j=rt.idx+1;j<ROUTINE.length;j++) tot+=stepDur(j);
+    $t("rtStepN").textContent="שלב "+(rt.idx+1)+"/"+ROUTINE.length;
+    $t("rtName").textContent=s.title;
+    $t("rtBpm").textContent=stepBpm(rt.idx)+" BPM\u200F · "+subName(s.sub||1)+(stepLink(rt.idx)?" · "+fullName(stepLink(rt.idx)):"");
+    $t("rtStepLeft").textContent=fmtMS(left);
+    $t("rtTotalLeft").textContent=fmtMS(tot);
+    var n=ROUTINE[rt.idx+1];
+    $t("rtNext").textContent = n ? n.title+" · "+stepBpm(rt.idx+1)+" BPM\u200F · "+(n.to-n.from)+" דק'" : "סיום השגרה 🎉";
+    $t("rtPause").textContent = tm.running ? "השהה" : "המשך";
+    [].forEach.call(segsEl.children,function(x,i){
+      x.className = i<rt.idx ? (rt.skipped.indexOf(i)>=0?"skip":"done") : "";
+      x.firstChild.style.width = i===rt.idx ? ((1-frac)*100).toFixed(1)+"%" : "0";
+    });
+  }
+  document.title = tm.running ? "⏱ "+fmtMS(left)+" · "+BASE_TITLE : BASE_TITLE;
+}
+document.querySelectorAll("#tPresets .chip").forEach(function(b){
+  b.addEventListener("click",function(){ if(tm.routine) return; tm.manual=(+b.dataset.min)*MIN; setDuration(tm.manual); saveTimerPrefs(); });
+});
+document.querySelectorAll("#tPresets .tstep").forEach(function(b){
+  b.addEventListener("click",function(){ adjustTimer((+b.dataset.tadj)*MIN); });
+});
+tStart.addEventListener("click",toggleTimer);
+$t("tReset").addEventListener("click",resetTimer);
+tWith.addEventListener("change",function(){ tm.withMetro=tWith.checked; saveTimerPrefs(); });
+$t("rtStart").addEventListener("click",startRoutine);
+$t("rtPause").addEventListener("click",toggleTimer);
+$t("rtSkip").addEventListener("click",skipStep);
+$t("rtStop").addEventListener("click",stopRoutine);
+document.addEventListener("visibilitychange",function(){ if(!document.hidden) timerCheck(); });
+window.addEventListener("focus",timerCheck);
+renderTimer();
+
+/* ---------- practice-session log ---------- */
+function stepLine(i){ var s=ROUTINE[i]; return (i+1)+". "+s.title+" @ "+stepBpm(i)+" BPM ("+subName(s.sub||1)+")"; }
+function hm(d){ return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); }
+function logSession(kind, minutes, steps, notes){
+  var d=new Date();
+  var row={id:"s_"+d.getTime().toString(36)+Math.random().toString(36).slice(2,5), date:ymd(d), ts:ymd(d)+" "+hm(d),
+    minutes:Math.max(0,Math.round(minutes)||0), steps:steps||"", notes:notes||"", kind:kind};
+  if(!Array.isArray(plan.log)) plan.log=[];
+  plan.log.push(row); if(plan.log.length>1000) plan.log=plan.log.slice(-1000);
+  savePlan();
+  syncEnqueue({k:"s", id:row.id, row:row});
+  return row;
+}
+
+/* ---------- Google Sheets sync (Apps Script web app) ---------- */
+var SYNC_KEY=STORE_KEY+"-sync";
+var syncBusy=false, syncTO=null, syncFails=0, syncSnapAt=0;
+var sync=(function(){ var s={}; try{ s=JSON.parse(localStorage.getItem(SYNC_KEY)||"{}")||{}; }catch(e){}
+  if(!isObj(s)) s={}; if(!Array.isArray(s.queue)) s.queue=[]; if(typeof s.url!=="string") s.url="";
+  s.lastOk=+s.lastOk||0; s.lastErr=s.lastErr?String(s.lastErr):""; return s; })();
+function saveSync(){ try{ localStorage.setItem(SYNC_KEY, JSON.stringify(sync)); }catch(e){} }
+function entryId(subId,x){ return subId+"|"+x.date; }
+function measurementRow(subId,x){
+  var s=SUB[subId], ex=EXOF[subId], d=new Date(x.date), w=isWork(x), ok=!isNaN(d);
+  return {id:entryId(subId,x), ts:ok?ymd(d)+" "+hm(d):String(x.date), date:ok?ymd(d):String(x.date).slice(0,10),
+    category:ex?catName(ex.cat):"", rudiment:ex?ex.name:subId, sub:s?s.name:subId,
+    type:w?"טמפו עבודה":"מקסימום נקי", clean:w?(x.work||null):(x.clean||null), hard:w?null:(x.hard||null),
+    notes:x.notes||"", subdiv:subdivOf(x), broke:(x.broke||[]).join(", "), subId:subId};
+}
+function allMeasurementRows(){
+  var rows=[];
+  Object.keys(state.entries).forEach(function(id){ entries(id).forEach(function(x){ if(isObj(x)&&x.date) rows.push(measurementRow(id,x)); }); });
+  rows.sort(function(a,b){ return a.ts<b.ts?-1:a.ts>b.ts?1:0; });
+  return rows;
+}
+// logged sessions + one row per marked practice day that has no logged session (history from before the log existed)
+function allSessionRows(){
+  var log=Array.isArray(plan.log)?plan.log.slice():[], have={};
+  log.forEach(function(r){ have[r.date]=1; });
+  Object.keys(plan.days).forEach(function(k){
+    if(!plan.days[k]||have[k]) return;
+    var st=Array.isArray(plan.steps[k])?plan.steps[k].filter(function(i){ return ROUTINE[i]; }):[];
+    log.push({id:"day_"+k, date:k, ts:k, kind:"יום תרגול (סימון)", minutes:st.length?st.reduce(function(a,i){ return a+stepDur(i)/MIN; },0):"",
+      steps:st.map(function(i){ return (i+1)+". "+ROUTINE[i].title; }).join(" | "), notes:"שוחזר מסימון ימי התרגול – הקצבים של אותו יום לא נשמרו"});
+  });
+  log.sort(function(a,b){ return String(a.ts)<String(b.ts)?-1:String(a.ts)>String(b.ts)?1:0; });
+  return log;
+}
+function snapshot(){
+  var keys={};
+  try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i);
+    if(k.indexOf(STORE_KEY)!==0 || k===SYNC_KEY) continue;
+    var v=localStorage.getItem(k); try{ keys[k]=JSON.parse(v); }catch(e){ keys[k]=v; } } }catch(e){}
+  var txt=""; try{ txt=buildTextSummary(); }catch(e){}
+  return {app:"rimon-rudiments", version:2, exported:new Date().toISOString(), localStorage:keys, summaryText:txt};
+}
+function syncEnqueue(item){
+  if(!sync.url) return;
+  if(item.k==="m"||item.k==="s") sync.queue=sync.queue.filter(function(q){ return !(q.k===item.k && q.id===item.id); });
+  if(item.k==="d") sync.queue=sync.queue.filter(function(q){ return !(q.k==="m" && q.id===item.id); });
+  sync.queue.push(item); saveSync(); renderSync(); scheduleSync(400);
+}
+function syncEntry(subId,x){ syncEnqueue({k:"m", id:entryId(subId,x), row:measurementRow(subId,x)}); }
+function syncDelete(subId,x){ syncEnqueue({k:"d", id:entryId(subId,x)}); }
+function syncFull(){ if(!sync.url) return false; sync.queue=[{k:"full"}]; saveSync(); renderSync(); clearTimeout(syncTO); syncFails=0; flushSync(); return true; }
+// any local change -> refresh the snapshot in the "גיבוי" tab (debounced)
+function syncTouch(){ if(typeof sync==="undefined"||!sync||!sync.url) return; syncSnapAt=Date.now(); sync.snapDirty=1; saveSync(); renderSync(); scheduleSync(2500); }
+function scheduleSync(ms){ if(!sync.url) return; clearTimeout(syncTO); syncTO=setTimeout(flushSync, ms); }
+function postSync(body){
+  var payload=JSON.stringify(body), opts={method:"POST", body:payload, headers:{"Content-Type":"text/plain;charset=utf-8"}, redirect:"follow", cache:"no-store"};
+  return fetch(sync.url, opts).then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.text(); })
+    .then(function(t){ var j; try{ j=JSON.parse(t); }catch(e){ throw new Error("תשובה לא צפויה מגוגל – בדוק שהפריסה היא Web app עם גישה Anyone"); }
+        if(!j || j.ok!==true) throw new Error((j&&j.error)||"שגיאה בסקריפט"); return j; },
+      function(err){
+        // a CORS-level failure while online: send anyway as a "simple" opaque request (the server de-dupes by id)
+        if(err && err.name==="TypeError" && navigator.onLine!==false)
+          return fetch(sync.url, {method:"POST", mode:"no-cors", body:payload, headers:{"Content-Type":"text/plain;charset=utf-8"}}).then(function(){ return {ok:true, opaque:true}; });
+        throw err;
+      });
+}
+function flushSync(){
+  clearTimeout(syncTO);
+  if(syncBusy || !sync.url) { renderSync(); return; }
+  if(!sync.queue.length && !sync.snapDirty){ renderSync(); return; }
+  var items=sync.queue.slice(), full=items.some(function(q){ return q.k==="full"; }), body;
+  if(full) body={action:"batch", full:true, measurements:allMeasurementRows(), sessions:allSessionRows(), snapshot:snapshot()};
+  else body={action:"batch",
+    measurements:items.filter(function(q){ return q.k==="m"; }).map(function(q){ return q.row; }),
+    sessions:items.filter(function(q){ return q.k==="s"; }).map(function(q){ return q.row; }),
+    deletes:items.filter(function(q){ return q.k==="d"; }).map(function(q){ return q.id; }),
+    snapshot:snapshot()};
+  var touchAt=Date.now(); syncBusy=true; renderSync();
+  return postSync(body).then(function(res){
+    sync.queue=sync.queue.filter(function(q){ return items.indexOf(q)<0; });
+    if(syncSnapAt<=touchAt) sync.snapDirty=0;
+    sync.lastOk=Date.now(); sync.lastErr=""; sync.opaque=!!res.opaque; syncFails=0;
+    if(res.url) sync.sheetUrl=res.url;
+    saveSync(); syncBusy=false; renderSync();
+    if(full) toast(res.opaque?"נשלח לגיליון (בלי אישור מגוגל)":"כל ההיסטוריה סונכרנה לגיליון ✓");
+    if(sync.queue.length) scheduleSync(300);
+    return true;
+  }, function(err){
+    syncBusy=false; syncFails++;
+    sync.lastErr=(navigator.onLine===false?"אין חיבור לאינטרנט":String(err&&err.message||err||"שגיאה"));
+    saveSync(); renderSync();
+    if(full) toast("הסנכרון נכשל – ננסה שוב אוטומטית");
+    scheduleSync(Math.min(300000, 15000*Math.pow(2,Math.min(5,syncFails-1))));
+    return false;
+  });
+}
+function syncStatus(){
+  if(!sync.url) return "none";
+  if(sync.lastErr && (sync.queue.length||sync.snapDirty)) return "err";
+  if(syncBusy || sync.queue.length || sync.snapDirty) return "wait";
+  return sync.lastOk ? "ok" : "wait";
+}
+var SYNC_LBL={none:"לא מוגדר", ok:"מסונכרן", wait:"ממתין", err:"שגיאה"};
+function renderSync(){
+  var st=syncStatus(), cls=st==="none"?"":st;
+  ["syncDot","syncDot2"].forEach(function(id){ var d=document.getElementById(id); if(d) d.className="sync-dot "+cls; });
+  var lbl=document.getElementById("syncLbl"); if(lbl) lbl.textContent = st==="none" ? "גוגל שיטס" : "שיטס: "+SYNC_LBL[st];
+  var box=document.getElementById("syncStatus"); if(!box) return;
+  var n=sync.queue.filter(function(q){ return q.k!=="full"; }).length, full=sync.queue.some(function(q){ return q.k==="full"; });
+  var h='סטטוס: <b data-st="'+st+'">'+SYNC_LBL[st]+'</b>';
+  if(st==="none") h+=' · הדבק את כתובת ה-Web App ולחץ „שמור כתובת”';
+  else {
+    if(syncBusy) h+=' · שולח…';
+    if(full) h+=' · סנכרון מלא בתור'; else if(n) h+=' · '+n+' בתור';
+    if(!sync.lastOk && !sync.queue.length && !syncBusy) h+=' · עוד לא סונכרן – „בדוק חיבור” ואז „סנכרן הכל”';
+    if(sync.lastOk) h+=' · אחרון: '+fmtDate(sync.lastOk,true)+(sync.opaque?' (בלי אישור)':'');
+    if(st==="err") h+='<span class="e">· '+esc(sync.lastErr)+' – ננסה שוב אוטומטית</span>';
+  }
+  box.innerHTML=h;
+  var a=document.getElementById("syncSheetLink"); if(a){ a.hidden=!sync.sheetUrl; if(sync.sheetUrl) a.href=sync.sheetUrl; }
+}
+function validUrl(u){ return /^https:\/\/\S+$/.test(u); }
+function jsonp(url, ms){
+  return new Promise(function(res,rej){
+    var cb="__rudSync"+Date.now().toString(36)+Math.floor(Math.random()*1e4), s=document.createElement("script"), done=false;
+    function fin(){ done=true; clearTimeout(to); try{ delete window[cb]; }catch(e){ window[cb]=undefined; } if(s.parentNode) s.parentNode.removeChild(s); }
+    var to=setTimeout(function(){ if(done) return; fin(); rej(new Error("אין תשובה מגוגל")); }, ms||15000);
+    window[cb]=function(d){ if(done) return; fin(); res(d); };
+    s.onerror=function(){ if(done) return; fin(); rej(new Error("הכתובת לא נטענה")); };
+    s.src=url+(url.indexOf("?")<0?"?":"&")+"callback="+cb+"&t="+Date.now();
+    document.head.appendChild(s);
+  });
+}
+function testSync(){
+  var u=sync.url; if(!u){ toast("קודם הדבק ושמור את כתובת ה-Web App"); return Promise.resolve(false); }
+  var box=document.getElementById("syncStatus"); if(box) box.innerHTML='סטטוס: <b>בודק חיבור…</b>';
+  return fetch(u+(u.indexOf("?")<0?"?":"&")+"t="+Date.now(), {cache:"no-store", redirect:"follow"})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .catch(function(){ return jsonp(u); })
+    .then(function(j){
+      if(!j || j.ok!==true) throw new Error((j&&j.error)||"תשובה לא צפויה");
+      if(j.url) sync.sheetUrl=j.url; sync.lastErr=""; saveSync(); renderSync();
+      toast("החיבור תקין ✓ "+(j.sheet?"גיליון: "+j.sheet:"")+(j.counts?" · "+j.counts.measurements+" מדידות בגיליון":""));
+      return true;
+    }).catch(function(e){
+      sync.lastErr="בדיקת חיבור נכשלה: "+(e&&e.message||e); saveSync(); renderSync();
+      var b=document.getElementById("syncStatus"); if(b) b.innerHTML='סטטוס: <b data-st="err">שגיאה</b><span class="e">· החיבור נכשל – בדוק שהכתובת מסתיימת ב-/exec ושהגישה היא Anyone</span>';
+      ["syncDot","syncDot2"].forEach(function(id){ var d=document.getElementById(id); if(d) d.className="sync-dot err"; });
+      toast("החיבור נכשל ✗");
+      return false;
+    });
+}
+(function initSync(){
+  var btn=document.getElementById("syncBtn"), panel=document.getElementById("syncPanel"), inp=document.getElementById("syncUrl");
+  function open(o){ panel.hidden=!o; btn.setAttribute("aria-expanded",String(o)); if(o) renderSync(); }
+  btn.addEventListener("click",function(){ open(panel.hidden); if(!panel.hidden && !sync.url) inp.focus(); });
+  inp.value=sync.url;
+  function saveUrl(){
+    var u=inp.value.trim();
+    if(u && !validUrl(u)){ toast("הכתובת צריכה להתחיל ב-https://"); inp.focus(); return false; }
+    if(/\/dev(\?|$)/.test(u)) toast("שים לב: זו כתובת /dev – צריך את הכתובת שמסתיימת ב-/exec");
+    var changed=u!==sync.url; sync.url=u;
+    if(changed){ sync.queue=[]; sync.lastOk=0; sync.lastErr=""; sync.sheetUrl=""; sync.snapDirty=0; }
+    saveSync(); renderSync();
+    return true;
+  }
+  document.getElementById("syncSave").addEventListener("click",function(){
+    if(!saveUrl()) return;
+    toast(sync.url?"הכתובת נשמרה – עכשיו „בדוק חיבור” ואז „סנכרן הכל”":"הסנכרון כובה");
+  });
+  inp.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); document.getElementById("syncSave").click(); } });
+  document.getElementById("syncTest").addEventListener("click",function(){ if(inp.value.trim()!==sync.url && !saveUrl()) return; testSync(); });
+  document.getElementById("syncAll").addEventListener("click",function(){
+    if(inp.value.trim()!==sync.url && !saveUrl()) return;
+    if(!syncFull()) toast("קודם הדבק ושמור את כתובת ה-Web App");
+  });
+  window.addEventListener("online",function(){ syncFails=0; flushSync(); });
+  document.addEventListener("visibilitychange",function(){ if(!document.hidden && sync.url && (sync.queue.length||sync.snapDirty)) flushSync(); });
+  renderSync();
+  if(sync.url && (sync.queue.length||sync.snapDirty)) scheduleSync(1500);
+})();
+
+/* ---------- one-time data fix (17.10.2026) ---------- */
+// Known mistakes in the 16.10 data: basic doubles 110 was really "accent on 2nd stroke" (real basic max 165),
+// drag 70 was a working tempo saved as a max (real drag max 90). Plus the valid measurements from 17.10.
+var FIX_KEY="fix1710";
+function onDay(x,a,b){ var d=new Date(x.date); if(isNaN(d)) return false; var k=ymd(d); return k>=a && k<=b; }
+function fixPlan(){
+  var d8=entries("double8").filter(function(x){ return !isWork(x) && x.clean===110 && onDay(x,"2026-10-15","2026-10-17"); });
+  var dr=entries("drag").filter(function(x){ return !isWork(x) && x.clean===70 && onDay(x,"2026-10-15","2026-10-17"); });
+  function has(id,c){ return entries(id).some(function(x){ return !isWork(x) && x.clean===c && onDay(x,"2026-10-17","2026-10-17"); }); }
+  var add=[]; if(!has("s_acc4r",110)) add.push("s_acc4r"); if(!has("singleL",120)) add.push("singleL");
+  var base=entries("single8").some(function(x){ return x.clean===225 && onDay(x,"2026-10-16","2026-10-16"); });
+  return {d8:d8, dr:dr, add:add, show: d8.length>0 || dr.length>0 || (add.length>0 && base)};
+}
+function checkFix(){
+  var bar=document.getElementById("fixBar"); if(!bar) return;
+  var f=fixPlan(); if(ui[FIX_KEY]==="done" && !f.d8.length && !f.dr.length) { bar.hidden=true; return; }
+  if(!f.show || ui[FIX_KEY]==="later"){ bar.hidden=true; return; }
+  var t=[];
+  if(f.d8.length) t.push("דאבל בסיסי 110 ← זה היה דאבל עם דגש על המכה השנייה (המקסימום הנקי האמיתי: 165)");
+  if(f.dr.length) t.push("דראג 70 ← זה טמפו עבודה, לא מקסימום (המקסימום הנקי האמיתי: 90)");
+  if(f.add.length) t.push("להוסיף את המדידות מ-17.10: "+f.add.map(function(id){ return id==="s_acc4r"?"סינגל שש-עשריות דגש כל 4 (נקי 110, קשה 120)":"יד שמאל בלבד (נקי 120, קשה 130)"; }).join(" · "));
+  document.getElementById("fixText").innerHTML="<b>תיקון נתונים:</b> "+t.map(esc).join(" · ")+". לפני התיקון נשמר גיבוי.";
+  bar.hidden=false;
+}
+function applyFix(){
+  var f=fixPlan();
+  try{ if(!localStorage.getItem(STORE_KEY+"-prefix1710")) localStorage.setItem(STORE_KEY+"-prefix1710", JSON.stringify(state)); }catch(e){}
+  function sortE(id){ state.entries[id].sort(function(a,b){ return new Date(a.date)-new Date(b.date); }); }
+  function ensure(id){ if(!Array.isArray(state.entries[id])) state.entries[id]=[]; }
+  if(f.d8.length){
+    state.entries.double8=entries("double8").filter(function(x){ return f.d8.indexOf(x)<0; });
+    ensure("d_acc2");
+    f.d8.forEach(function(x){ if(!entries("d_acc2").some(function(y){ return !isWork(y)&&y.clean===110; }))
+      state.entries.d_acc2.push({date:x.date, clean:110, hard:x.hard||120, broke:x.broke||[], notes:"דגש על המכה השנייה (תוקן: נרשם בטעות כדאבל בסיסי)"}); });
+    sortE("d_acc2");
+  }
+  if(f.d8.length || f.dr.length){
+    ensure("double8");
+    if(!entries("double8").some(function(x){ return !isWork(x)&&x.clean===165; })) state.entries.double8.push({date:"2026-10-16T13:18:40.028Z", clean:165, hard:180, broke:[], notes:""});
+    sortE("double8");
+  }
+  if(f.dr.length){
+    state.entries.drag=entries("drag").map(function(x){ return f.dr.indexOf(x)<0 ? x :
+      {date:x.date, kind:"work", work:70, clean:null, hard:null, broke:x.broke||[], notes:((x.notes?x.notes+" · ":"")+"תוקן: טמפו עבודה, לא מקסימום")}; });
+    if(!entries("drag").some(function(x){ return !isWork(x)&&x.clean===90; })) state.entries.drag.push({date:"2026-10-16T13:34:42.760Z", clean:90, hard:100, broke:[], notes:""});
+    sortE("drag");
+  }
+  if(f.add.indexOf("s_acc4r")>=0){ ensure("s_acc4r"); state.entries.s_acc4r.push({date:"2026-10-17T11:00:00.000Z", clean:110, hard:120, broke:[], notes:"מדידה 17.10 – שש-עשריות, דגש כל 4 (ימין)"}); sortE("s_acc4r"); }
+  if(f.add.indexOf("singleL")>=0){ ensure("singleL"); state.entries.singleL.push({date:"2026-10-17T11:05:00.000Z", clean:120, hard:130, broke:[], notes:"מדידה חוזרת 17.10"}); sortE("singleL"); }
+  ["singleL","singleR"].forEach(function(id){ entries(id).forEach(function(x){ if(!x.subdiv && subdivOf(x)==="רבעים") x.subdiv="רבעים"; }); });
+  ui[FIX_KEY]="done"; saveUi();
+  save(); refreshAll(); syncFull(); checkFix();
+  toast("הנתונים תוקנו ✓"+(sync.url?" ונשלחים לגיליון":""));
+}
+document.getElementById("fixApply").addEventListener("click",applyFix);
+document.getElementById("fixLater").addEventListener("click",function(){ ui[FIX_KEY]="later"; saveUi(); checkFix(); toast("אפשר לתקן גם בייבוא הקובץ rudiments-data-2026-10-17.json (החלפה)"); });
+checkFix();
+
+// expose for tests
+window.__rudiments={buildTextSummary:buildTextSummary,openSub:openSub,stepBpm:stepBpm,stepLink:stepLink,state:function(){return JSON.parse(JSON.stringify(state));},fullName:fullName,refreshAll:refreshAll,goalProgress:goalProgress,renderPlan:renderPlan,
+  timer:function(){ return {running:tm.running,left:timerLeft(),dur:tm.dur,routine:tm.routine?{idx:tm.routine.idx,skipped:tm.routine.skipped.slice()}:null,withMetro:tm.withMetro,chimes:tm.chimes.slice()}; },
+  timerCheck:timerCheck,
+  sync:function(){ return JSON.parse(JSON.stringify({url:sync.url,queue:sync.queue,lastOk:sync.lastOk,lastErr:sync.lastErr,status:syncStatus()})); },
+  syncFlush:function(){ clearTimeout(syncTO); syncFails=0; flushSync(); }, handGap:handGap, measurementRows:allMeasurementRows, sessionRows:allSessionRows};
+})();
+</script>
+</body>
+</html>
