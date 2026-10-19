@@ -231,7 +231,7 @@ function render(){
   var sg=rest ? RT.raiseSuggestion(P.restIdx) : null;
   document.querySelectorAll("[data-raise-box]").forEach(function(n){ n.hidden=!sg; });
   if(sg){
-    setP("raisetxt", RT.RAISE_AFTER+" פעמים ברצף נקי ב-"+sg.from+" BPM. להעלות את היעד?");
+    setP("raisetxt", RT.RAISE_AFTER+" פעמים ברצף נקי ב-"+sg.from+" BPM‏. להעלות את היעד?");
     setP("raiseto", "העלה ל-"+sg.to);
   }
   var dp=document.getElementById("donePanel");
