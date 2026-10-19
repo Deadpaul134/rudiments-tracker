@@ -1,0 +1,13 @@
+{
+  "name": "rudiments-tracker",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Rudiments Tracker v2 – Hebrew RTL drum-rudiments practice tracker (static, no build)",
+  "scripts": {
+    "test": "playwright test",
+    "screenshots": "node scripts/screenshots.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
+  }
+}
