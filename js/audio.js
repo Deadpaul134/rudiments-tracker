@@ -1,4 +1,5 @@
 /* Metronome: Web Audio look-ahead scheduling (sample-accurate), accent on beat 1, optional subdivision clicks,
+   4 synthesized sounds (click / cowbell / woodblock / beep), volume + "loud" mode through a limiter,
    count-in bar with a distinct sound, optional gap mode (X bars click / Y bars silent – the clock keeps running). Falls back to a silent visual clock when Web Audio is unavailable. */
 (function(){
 "use strict";
@@ -35,17 +36,109 @@ RT.ensureAudio = ensureAudio;
 var t0 = Date.now();
 function now(){ return (m.ctx && m.ctx.state === "running") ? m.ctx.currentTime : (Date.now()-t0)/1000; }
 
-function click(time, level){ // level: 3 count-in, 2 accent, 1 beat, 0 subdivision
-  var c = m.ctx; if(!c || c.state !== "running") return;
-  var o = c.createOscillator(), g = c.createGain();
-  o.type = level===2 ? "square" : (level===3 ? "triangle" : "sine");
-  o.frequency.value = level===3 ? 2200 : level===2 ? 1760 : (level===1 ? 1100 : 820);
-  var peak = level===3 ? 0.45 : level===2 ? 0.5 : (level===1 ? 0.38 : 0.16);
-  g.gain.setValueAtTime(0.0001, time);
-  g.gain.exponentialRampToValueAtTime(peak, time+0.001);
-  g.gain.exponentialRampToValueAtTime(0.0001, time+(level>=2?0.06:0.04));
-  o.connect(g); g.connect(c.destination); o.start(time); o.stop(time+0.08);
+/* ---------- metronome voices (all synthesized, no audio files) ----------
+   level: 3 count-in, 2 accent (beat 1), 1 beat, 0 subdivision. Every sound is higher + louder on the accent.
+   Output chain per context: voices → volume gain → DynamicsCompressor as a brick-wall limiter → destination,
+   so "loud" mode (drum kit + earbuds) can push the level hard without clipping. */
+var PITCH = [0.8, 1, 1.5, 1.26], LEVEL = [0.35, 0.75, 1, 0.85];
+var LOUD_GAIN = 3.2;
+function noiseBuf(c){
+  if(c.__rtNoise) return c.__rtNoise;
+  var b = c.createBuffer(1, Math.round(c.sampleRate*0.25), c.sampleRate), d = b.getChannelData(0);
+  for(var i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  return (c.__rtNoise = b);
 }
+// percussive envelope on a fresh gain node: near-instant attack, exponential decay
+function env(c, dest, time, peak, decay){
+  var g = c.createGain();
+  g.gain.setValueAtTime(0.0001, time);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), time+0.001);
+  g.gain.exponentialRampToValueAtTime(0.0001, time+decay);
+  g.connect(dest); return g;
+}
+function osc(c, dest, type, freq, time, dur){
+  var o = c.createOscillator(); o.type = type; o.frequency.value = freq;
+  o.connect(dest); o.start(time); o.stop(time+dur+0.02); return o;
+}
+function noise(c, dest, time, dur, type, freq, q){
+  var n = c.createBufferSource(), f = c.createBiquadFilter();
+  n.buffer = noiseBuf(c); f.type = type; f.frequency.value = freq; if(q) f.Q.value = q;
+  n.connect(f); f.connect(dest); n.start(time); n.stop(time+dur+0.02); return n;
+}
+function voice(c, dest, time, level, sound, loud){
+  var p = PITCH[level], a = LEVEL[level], k = loud ? 1 : 0, d;
+  if(sound === "beep"){ // the original v2 sound: sine beats, square accent, triangle count-in
+    var type = level===2 ? "square" : (level===3 ? "triangle" : (k ? "triangle" : "sine"));
+    var f = level===3 ? 2200 : level===2 ? 1760 : (level===1 ? 1100 : 820);
+    var peak = level===3 ? 0.45 : level===2 ? 0.5 : (level===1 ? 0.38 : 0.16);
+    d = level>=2 ? 0.06 : 0.04;
+    osc(c, env(c, dest, time, peak*(k?1.6:1), d), type, f, time, d);
+    if(k) osc(c, env(c, dest, time, peak*0.5, d*0.7), "square", f*2, time, d);
+  } else if(sound === "cowbell"){ // 808-style: two detuned squares through a band-pass
+    d = (level===0 ? 0.08 : 0.16) + k*0.06;
+    var bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2400*p; bp.Q.value = 1.2;
+    bp.connect(env(c, dest, time, a*(0.7+k*0.5), d));
+    osc(c, bp, "square", 560*p, time, d); osc(c, bp, "square", 845*p, time, d);
+    if(k) noise(c, env(c, dest, time, a*0.5, 0.012), time, 0.012, "highpass", 3000);
+  } else if(sound === "woodblock"){ // pitched knock with a fast downward pitch blip + tiny noise attack
+    d = (level===0 ? 0.035 : 0.06) + k*0.02;
+    var g = env(c, dest, time, a*(0.85+k*0.4), d), o = osc(c, g, k ? "triangle" : "sine", 1100*p, time, d);
+    o.frequency.setValueAtTime(1600*p, time); o.frequency.exponentialRampToValueAtTime(1050*p, time+0.012);
+    noise(c, env(c, dest, time, a*(0.35+k*0.4), 0.008), time, 0.01, "bandpass", 2500*p, 1.5);
+    if(k) osc(c, env(c, dest, time, a*0.35, d*0.6), "sine", 2750*p, time, d);
+  } else { // "click" (default): sharp metallic tick – inharmonic squares (hi-hat style) + high noise transient
+    d = (level===0 ? 0.02 : 0.035) + k*0.02;
+    var hp = c.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2500*p;
+    var rs = [1, 1.342, 1.787, 2.405].concat(k ? [3.1, 4.07] : []);
+    hp.connect(env(c, dest, time, a*(0.9+k*0.6)/rs.length*1.6, d));
+    rs.forEach(function(r){ osc(c, hp, "square", 1250*p*r, time, d); });
+    noise(c, env(c, dest, time, a*(0.35+k*0.35), 0.006+k*0.006), time, 0.015, "highpass", 4000*p);
+    if(k) osc(c, env(c, dest, time, a*0.7, 0.03), "triangle", 1000*p, time, 0.03); // body so it cuts through cymbals
+  }
+}
+// gain stage for the volume slider (perceptual curve) and limiter settings for the current mode
+function outGain(vol, loud){ var v = Math.max(0, Math.min(100, +vol||0))/100; return v*v*(loud ? LOUD_GAIN : 1); }
+// safety net after the compressor: linear up to 0.8, then a smooth knee that never passes 0.98
+// (the compressor alone lets the first milliseconds of a sharp transient overshoot)
+var SAFE_CURVE = (function(){
+  var n = 2049, cv = new Float32Array(n);
+  for(var i=0;i<n;i++){ var x = (i/(n-1)*2-1)*2, ax = Math.abs(x); // shaper input is pre-scaled by 0.5 → covers ±2
+    cv[i] = (x<0?-1:1) * (ax <= 0.8 ? ax : 0.8 + 0.18*Math.tanh((ax-0.8)/0.18)); }
+  return cv;
+})();
+function makeOut(c){
+  var vol = c.createGain(), lim = c.createDynamicsCompressor(), post = c.createGain(), safe = c.createWaveShaper();
+  lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;
+  safe.curve = SAFE_CURVE;
+  vol.connect(lim); lim.connect(post); post.connect(safe); safe.connect(c.destination);
+  return {vol:vol, lim:lim, post:post, safe:safe};
+}
+function setOut(o, s, c){
+  var t = c.currentTime, g = outGain(s.metroVolume, s.metroLoud);
+  o.vol.gain.cancelScheduledValues(t); o.vol.gain.setValueAtTime(g, t);
+  o.lim.threshold.value = s.metroLoud ? -10 : -4; // loud: squeeze harder (the compressor adds its own make-up gain)
+  o.post.gain.value = 0.5 * (s.metroLoud ? 0.8 : 0.9); // 0.5 = pre-scale for the safety curve
+}
+// exposed for tests (render offline) and the settings preview
+RT.metroAudio = {voice:voice, makeOut:makeOut, setOut:setOut, outGain:outGain};
+function out(c){
+  if(!m.out || m.out.ctx !== c){ m.out = makeOut(c); m.out.ctx = c; setOut(m.out, RT.settings, c); }
+  return m.out;
+}
+m.applySound = function(){ var c = m.ctx; if(c) setOut(out(c), RT.settings, c); };
+function click(time, level){
+  var c = m.ctx; if(!c || c.state !== "running") return;
+  var s = RT.settings, o = out(c);
+  try{ voice(c, o.vol, time, level, s.metroSound, s.metroLoud === true); }catch(e){ console.error(e); }
+}
+/* short sample bar for the settings screen: accent + 3 beats in the chosen sound */
+m.preview = function(){
+  m.log.push({ev:"preview", sound:RT.settings.metroSound});
+  var c = ensureAudio(); if(!c || m.running) return;
+  var go = function(){ if(c.state !== "running") return; m.applySound(); var t = c.currentTime+0.05, b = 60/Math.max(60, m.bpm);
+    for(var i=0;i<4;i++) click(t+i*b, i===0 ? 2 : 1); };
+  if(c.state === "running") go(); else if(c.resume) c.resume().then(go, function(){});
+};
 
 function scheduler(){
   var t = now();

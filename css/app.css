@@ -243,6 +243,8 @@ textarea.tin{min-height:70px;resize:vertical}
 .gap-n{display:flex;align-items:center;gap:6px;font-size:14.5px;color:var(--muted)}
 .gap-n .tin{width:58px}
 .gap-n.off{opacity:.55}
+.snd-tool{font-size:14.5px}
+input.vol{width:100%;min-height:44px;accent-color:var(--accent);cursor:pointer}
 .rec-dot{width:12px;height:12px;border-radius:50%;background:var(--bad);flex:none}
 #recTool[data-state="rec"] .rec-btn{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
 #recTool[data-state="rec"] .rec-dot{border-radius:3px;animation:recPulse 1s ease-in-out infinite}
