@@ -104,6 +104,19 @@ async function shoot(browser, view, theme) {
   await page.click('.ex[data-ex="flam"] .ex-head');
   await snap('07-library');
   await go('settings'); await snap('08-settings');
+
+  // rating after the fact: two routine steps that were never rated
+  await page.evaluate(() => {
+    window.RT.addEntry('single8', { date: '2026-10-19T07:30:00.000Z', kind: 'work', work: 120, clean: null, hard: null, broke: [], notes: '', src: 'routine' });
+    window.RT.addEntry('flamL', { date: '2026-10-17T08:00:00.000Z', kind: 'work', work: 80, clean: null, hard: null, broke: [], notes: '', src: 'routine' });
+  });
+  await go('home'); await snap('12-home-rate-reminder', false);
+  await page.click('#rateOpen'); await snap('13-rate-window', false);
+  await page.locator('#modalBtns button', { hasText: 'סיום' }).click();
+  await go('progress');
+  await page.locator('#pgHist [data-rate-entry]').first().scrollIntoViewIfNeeded();
+  await page.locator('#pgHist [data-rate-entry]').first().click();
+  await snap('14-progress-rate-picker', false);
   await ctx.close();
   if (errors.length) throw new Error(`${view.name}/${theme}: ${errors.join('; ')}`);
 }
