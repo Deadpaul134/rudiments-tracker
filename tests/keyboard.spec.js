@@ -81,7 +81,7 @@ test.describe('keyboard shortcuts (practice)', () => {
 
   test('shortcuts are ignored while typing in a field', async ({ page }) => {
     await open(page, 'settings');
-    await page.click('#syncUrl');
+    await page.click('#syncCode');
     await page.keyboard.press('Space');
     await page.goto(page.url().replace(/#.*$/, '#practice'));
     expect((await P(page)).phase).toBe('idle');
