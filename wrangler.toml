@@ -9,7 +9,7 @@ compatibility_date = "2026-10-01"
 binding = "DB"
 database_name = "rudiments-sync"
 # Paste the id printed by `npx wrangler d1 create rudiments-sync` (see SYNC_REPORT.md).
-database_id = "REPLACE_WITH_DATABASE_ID"
+database_id = "90388c35-ac62-4899-9bdf-7fd478708fb8"
 migrations_dir = "migrations"
 
 # The access code is a secret, never stored here:

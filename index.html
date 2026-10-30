@@ -147,6 +147,7 @@
           <label class="sw"><input type="checkbox" id="gapOn"><span class="knob" aria-hidden="true"></span>מטרונום עם הפסקות</label>
           <span class="gap-n" id="gapNums"><input type="number" class="tin sm num" id="gapPlay" min="1" max="16" inputmode="numeric" aria-label="תיבות עם קליק"> עם קליק · <input type="number" class="tin sm num" id="gapMute" min="1" max="16" inputmode="numeric" aria-label="תיבות בשקט"> בשקט</span>
         </div>
+        <label class="tool snd-tool"><span class="muted">צליל</span><select class="tin sm" id="pSound" aria-label="צליל המטרונום"><option value="click">קליק</option><option value="cowbell">קאובל</option><option value="woodblock">בלוק עץ</option><option value="beep">ביפ</option></select></label>
         <div class="tool" id="recTool" data-state="idle">
           <button type="button" class="btn sm rec-btn" id="recBtn" aria-pressed="false"><i class="rec-dot" aria-hidden="true"></i><span id="recLbl">הקלטה</span></button>
           <span class="rec-t muted small" id="recTime" aria-live="off"></span>
@@ -307,6 +308,19 @@
         <p class="muted small">מקבל קבצי ייצוא מגרסה 1 ומגרסה 2. הנתונים נשמרים בדפדפן הזה – מומלץ לייצא מדי פעם לגיבוי.</p>
         <p class="muted small" id="migInfo"></p>
       </div>
+      <div class="card" id="metroCard">
+        <div class="card-h"><h2><i class="dot"></i>מטרונום</h2></div>
+        <div class="fld"><span>צליל</span>
+          <div class="seg" id="metroSoundSeg" role="radiogroup" aria-label="צליל המטרונום">
+            <button type="button" data-sound="click" role="radio">קליק</button><button type="button" data-sound="cowbell" role="radio">קאובל</button><button type="button" data-sound="woodblock" role="radio">בלוק עץ</button><button type="button" data-sound="beep" role="radio">ביפ</button>
+          </div>
+        </div>
+        <label class="fld"><span>עוצמה: <b id="setVolVal" class="num"></b></span><input type="range" class="vol" id="setVol" min="0" max="100" step="1" aria-label="עוצמת המטרונום"></label>
+        <label class="sw"><input type="checkbox" id="setLoud"><span class="knob" aria-hidden="true"></span>מצב חזק – מערכת תופים</label>
+        <p class="muted small">למערכת תופים עם אוזניות: צליל חד ובולט יותר וחזק בהרבה, עם הגבלה שמונעת עיוות.</p>
+        <label class="sw"><input type="checkbox" id="setSubClicks"><span class="knob" aria-hidden="true"></span>השמע קליקים של החלוקה (שמיניות / טריולות / שש-עשריות)</label>
+        <div class="row gap"><button type="button" class="btn" id="metroPreview">השמע דוגמה</button></div>
+      </div>
       <div class="card">
         <div class="card-h"><h2><i class="dot"></i>תרגול ומדידה</h2></div>
         <div class="fld-row">
@@ -317,7 +331,6 @@
           <label class="fld"><span>מדידה: עלייה (BPM)</span><input type="number" class="tin num" id="setMStep" min="1" max="30"></label>
           <label class="fld"><span>מדידה: כל (שניות)</span><input type="number" class="tin num" id="setMEvery" min="5" max="300"></label>
         </div>
-        <label class="sw"><input type="checkbox" id="setSubClicks"><span class="knob" aria-hidden="true"></span>השמע קליקים של החלוקה (שמיניות / טריולות / שש-עשריות)</label>
       </div>
     </div>
     <div class="col">

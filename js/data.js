@@ -104,8 +104,19 @@ var DEFAULT_ROUTINE = [
 RT.DEFAULT_ROUTINE = DEFAULT_ROUTINE;
 var DEFAULT_WEEKLY = ["single8","double8","para8","flamR","flamL","drag","singleR","singleL"];
 
-var DEFAULT_SETTINGS = {restSec:15, countIn:4, subClicks:true, measureStart:20, measureStep:5, measureEvery:30};
+var DEFAULT_SETTINGS = {restSec:15, countIn:4, subClicks:true, measureStart:20, measureStep:5, measureEvery:30,
+  metroSound:"click", metroVolume:80, metroLoud:false};
 RT.DEFAULT_SETTINGS = DEFAULT_SETTINGS;
+RT.METRO_SOUNDS = ["click","cowbell","woodblock","beep"];
+// metronome sound settings: unknown / missing / malformed values (older saves) fall back to the defaults
+function normMetroSettings(s){
+  if(RT.METRO_SOUNDS.indexOf(s.metroSound)<0) s.metroSound=DEFAULT_SETTINGS.metroSound;
+  var v=parseFloat(s.metroVolume);
+  s.metroVolume = isFinite(v) ? Math.max(0,Math.min(100,Math.round(v))) : DEFAULT_SETTINGS.metroVolume;
+  s.metroLoud = s.metroLoud===true;
+  return s;
+}
+RT.normMetroSettings = normMetroSettings;
 
 /* ---------- small helpers ---------- */
 function isObj(o){ return !!o && typeof o==="object" && !Array.isArray(o); }
@@ -208,7 +219,7 @@ RT.routineFromV1 = routineFromV1;
 RT.state = loadState();
 RT.plan = normPlan(readJSON(KEYS.plan, {}));
 RT.ui = (function(){ var u=readJSON(KEYS.ui,{}); if(!isObj(u)) u={}; if(!isObj(u.open)) u.open={}; if(!isObj(u.tab)) u.tab={}; if(!u.cat) u.cat="rud"; if(!isObj(u.raiseOff)) u.raiseOff={}; return u; })();
-RT.settings = Object.assign({}, DEFAULT_SETTINGS, (function(){ var s=readJSON(KEYS.settings,{}); return isObj(s)?s:{}; })());
+RT.settings = normMetroSettings(Object.assign({}, DEFAULT_SETTINGS, (function(){ var s=readJSON(KEYS.settings,{}); return isObj(s)?s:{}; })()));
 
 /* one-time v1 → v2 migration of localStorage (backup of every v1 key, routine conversion) */
 (function firstRun(){
