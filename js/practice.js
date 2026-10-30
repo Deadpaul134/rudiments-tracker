@@ -99,6 +99,23 @@ function rate(r){
   render(); renderSteps();
   return true;
 }
+// three small rating buttons (clean / ok / broke); the current one is marked
+RT.rateGroup=function(cur, i){
+  return '<span class="rl" role="group" aria-label="דירוג">'+Object.keys(RT.RATINGS).map(function(k){
+    return '<button type="button" class="rl-b rt-'+k+(cur===k?' on':'')+'" data-rl="'+k+'"'+(i!=null?' data-i="'+i+'"':'')+' aria-pressed="'+(cur===k)+'">'+RT.RATINGS[k]+'</button>';
+  }).join("")+'</span>';
+};
+// rating after the routine ended (summary screen): tapping the current rating clears it
+function rateDone(i, r){
+  if(P.phase!=="done" || !RT.RATINGS[r]) return false;
+  var res=P.results[i]; if(!res) return false;
+  var nr = res.rating===r ? null : r, link=RT.stepLink(i);
+  if(nr) res.rating=nr; else delete res.rating;
+  if(link && res.entry) RT.setRating(link, res.entry, nr);
+  RT.toast(nr ? "נרשם: "+R()[i].title+" · "+RT.RATINGS[nr] : "הדירוג בוטל: "+R()[i].title);
+  render(); renderSteps();
+  return true;
+}
 // +4 BPM suggestion after a clean streak: one tap raises the rated step's target, or dismisses it for this BPM
 function raise(accept){
   if(P.phase!=="rest") return false;
@@ -239,10 +256,12 @@ function render(){
   if(P.phase==="done"){
     dp.innerHTML='<ul class="done-list">'+steps.map(function(st,i){
       var r=P.results[i], sk=P.skipped.indexOf(i)>=0 && P.done.indexOf(i)<0;
-      return '<li><span>'+esc(st.title)+'</span><span class="muted">'+(r&&r.bpm?r.bpm+" BPM‏":"")+'</span>'+
-        (sk?'<span class="badge">דולג</span>':r&&r.rating?'<span class="badge rt-'+r.rating+'">'+RT.RATINGS[r.rating]+'</span>':'<span class="badge">ללא דירוג</span>')+'</li>';
-    }).join("")+'</ul><div class="row gap center"><button type="button" class="btn primary" data-act="again">שגרה נוספת</button><a class="btn" href="#progress">להתקדמות</a></div>';
+      return '<li data-done-i="'+i+'"><span>'+esc(st.title)+'</span><span class="muted">'+(r&&r.bpm?r.bpm+" BPM‏":"")+'</span>'+
+        (sk?'<span class="badge">דולג</span>':r?RT.rateGroup(r.rating,i):'<span class="badge">ללא דירוג</span>')+'</li>';
+    }).join("")+'</ul><p class="muted small">שכחת לדרג? אפשר לדרג כאן, וגם אחר כך במסך ההתקדמות. לחיצה על הדירוג הנוכחי מבטלת אותו.</p>'+
+      '<div class="row gap center"><button type="button" class="btn primary" data-act="again">שגרה נוספת</button><a class="btn" href="#progress">להתקדמות</a></div>';
     dp.querySelector('[data-act="again"]').addEventListener("click",function(){ reset(); P.idx=0; render(); renderSteps(); });
+    dp.querySelectorAll("[data-rl]").forEach(function(b){ b.addEventListener("click",function(){ rateDone(+b.dataset.i, b.dataset.rl); }); });
   }
   renderTick();
 }
@@ -295,7 +314,7 @@ metro.onBeat(function(beat,count,silent){
   if(beat>=0 && count) setP("phase","ספירה… "+((RT.settings.countIn||4)-beat));
 });
 
-RT.practice = {start:start, togglePause:togglePause, next:next, prev:prev, rate:rate, raise:raise, stop:stop, adjust:adjust, render:render, renderSteps:renderSteps,
+RT.practice = {start:start, togglePause:togglePause, next:next, prev:prev, rate:rate, rateDone:rateDone, raise:raise, stop:stop, adjust:adjust, render:render, renderSteps:renderSteps,
   goStep:goStep, active:function(){ return P.phase!=="idle" && P.phase!=="done"; }};
 
 /* ======================= weekly measurement ======================= */

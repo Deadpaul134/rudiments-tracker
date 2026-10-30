@@ -424,3 +424,17 @@ body.focus-on{overflow:hidden}
 .hero .btn.xl{white-space:normal;text-align:center;max-width:100%}
 @media (max-width:1180px){ .hero{gap:20px;padding:22px} .ring-wrap{width:140px;height:140px} .ring-n{font-size:36px} .hero .btn.xl{font-size:18px;padding:12px 22px} }
 @media (max-width:480px){ .bpm-adj[data-adj="5"],.bpm-adj[data-adj="-5"]{display:none} }
+
+/* rating after the fact */
+.rl{display:inline-flex;gap:4px;flex-wrap:wrap}
+.rl-b{min-height:36px;padding:4px 12px;border-radius:999px;border:1px solid var(--line2);background:var(--card);color:var(--muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.rl-b.on.rt-clean{background:var(--good-soft);color:var(--good);border-color:var(--good)}
+.rl-b.on.rt-ok{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.rl-b.on.rt-broke{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+button.badge{border:1px dashed var(--line2);cursor:pointer;font-family:inherit;min-height:32px}
+button.badge.rt-clean,button.badge.rt-ok,button.badge.rt-broke{border-style:solid;border-color:transparent}
+.note.rate{background:var(--card2);border:1px solid var(--line2)}
+.rate-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow:auto}
+.rate-list li{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 12px;background:var(--card2);border-radius:14px}
+.rate-list .rl-t{flex:1;min-width:160px;display:flex;flex-direction:column}
+.done-list li{flex-wrap:wrap}

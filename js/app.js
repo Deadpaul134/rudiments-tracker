@@ -86,8 +86,28 @@ function renderHome(){
   $("measureTag").textContent = dow===0 ? "היום" : "יום ראשון "+RT.dm(RT.addDays(today,7-dow));
   $("measureTag").classList.toggle("hot",dow===0);
   $("measureText").textContent = measured+"/"+list.length+" נמדדו השבוע. הטמפו עולה אוטומטית ואתה רק מסמן מתי נהיה קשה ומתי נשבר.";
-  renderFix();
+  renderFix(); renderRateBar();
 }
+var RATE_DAYS=7;
+function renderRateBar(){
+  var n=RT.unrated(RATE_DAYS).length;
+  $("rateBar").hidden=!n;
+  if(n) $("rateText").innerHTML=(n===1?"<b>שלב אחד</b> מהשבוע האחרון נשאר":"<b>"+n+"</b> שלבים מהשבוע האחרון נשארו")+" בלי דירוג.";
+}
+function openRateWindow(){
+  var list=RT.unrated(RATE_DAYS);
+  if(!list.length){ RT.toast("הכל מדורג ✓"); return; }
+  modal("דירוג בדיעבד", '<p class="muted small">איך היה כל שלב? לחיצה על הדירוג הנוכחי מבטלת אותו.</p><ul class="rate-list">'+list.map(function(o,i){
+    return '<li data-ri="'+i+'"><span class="rl-t"><b>'+esc(RT.fullName(o.id))+'</b><small class="muted">'+RT.fmtDate(o.x.date,true)+' · '+o.x.work+' BPM‏</small></span>'+RT.rateGroup(o.x.rating,i)+'</li>';
+  }).join("")+'</ul>', [{t:"סיום",primary:true,fn:function(){ renderHome(); }}]);
+  $("modalBody").querySelectorAll("[data-rl]").forEach(function(b){ b.addEventListener("click",function(){
+    var o=list[+b.dataset.i], r=b.dataset.rl, nr=o.x.rating===r?null:r;
+    RT.setRating(o.id,o.x,nr);
+    b.parentNode.querySelectorAll("[data-rl]").forEach(function(c){ var on=c.dataset.rl===nr; c.classList.toggle("on",on); c.setAttribute("aria-pressed",String(on)); });
+    renderRateBar();
+  }); });
+}
+$("rateOpen").addEventListener("click",openRateWindow);
 function renderWeek(){
   var box=$("week"), today=RT.dayStart(new Date()), ws=RT.addDays(RT.weekStart(today),7*wkOffset), cnt=0;
   box.innerHTML="";
@@ -208,16 +228,26 @@ function renderChart(){
   if(n>1) s+='<text x="'+xl+'" y="'+(H-8)+'" fill="'+dim+'" font-size="11" text-anchor="middle">'+RT.fmtDate(e[n-1].date)+'</text>';
   box.innerHTML=s+'</svg>';
 }
+// choose clean / ok / broke / no rating for one working-tempo entry
+function ratePicker(id,x,after){
+  function pick(r){ return function(){ RT.setRating(id,x,r); RT.toast(r?"הדירוג נשמר: "+RT.RATINGS[r]:"הדירוג בוטל"); if(after) after(); }; }
+  var btns=Object.keys(RT.RATINGS).map(function(k){ return {t:RT.RATINGS[k]+(x.rating===k?" ✓":""), primary:x.rating===k, fn:pick(k)}; });
+  btns.push({t:"ללא דירוג"+(x.rating?"":" ✓"), fn:pick(null)});
+  btns.push({t:"ביטול"});
+  modal("דירוג · "+RT.fullName(id), '<p class="muted">'+RT.fmtDate(x.date,true)+' · טמפו עבודה <b>'+x.work+'</b> BPM</p>', btns);
+}
 function renderHist(){
   var ul=$("pgHist"), id=pg.sub, e=RT.entries(id);
   ul.innerHTML = e.length ? "" : '<li class="muted">אין היסטוריה</li>';
   e.slice().reverse().forEach(function(x){
     var w=RT.isWork(x), sd=RT.subdivOf(x), li=el("li",{"class":w?"work":"max"});
     li.innerHTML='<span class="kind">'+(w?"טמפו עבודה":"מקס נקי")+'</span>'+
-      '<span class="h-v">'+(w?'<b>'+x.work+'</b>'+(x.rating?' <span class="badge rt-'+x.rating+'">'+RT.RATINGS[x.rating]+'</span>':'')
+      '<span class="h-v">'+(w?'<b>'+x.work+'</b> <button type="button" class="badge'+(x.rating?' rt-'+x.rating:'')+'" data-rate-entry aria-label="שנה דירוג">'+(x.rating?RT.RATINGS[x.rating]:'ללא דירוג')+'</button>'
         :'נקי <b>'+(x.clean||"—")+'</b> · קשה <b>'+(x.hard||"—")+'</b>'+(x.breakBpm?' · נשבר <b>'+x.breakBpm+'</b>':''))+(sd?' · '+esc(sd):'')+'</span>'+
       '<span class="muted small">'+RT.fmtDate(x.date,true)+'</span><button type="button" class="ib del" aria-label="מחק רשומה">×</button>'+
       (x.notes||(x.broke&&x.broke.length)?'<span class="h-note muted small">'+esc([(x.broke||[]).join(", "),x.notes].filter(Boolean).join(" · "))+'</span>':'');
+    var rb=li.querySelector("[data-rate-entry]");
+    if(rb) rb.addEventListener("click",function(){ ratePicker(id,x,renderProgress); });
     li.querySelector(".del").addEventListener("click",function(){
       confirmBox("למחוק את הרשומה?", RT.fmtDate(x.date,true)+" · "+(w?"טמפו עבודה "+x.work:"מקס נקי "+(x.clean||"—")), "מחק", function(){ RT.deleteEntry(id,x); renderProgress(); RT.toast("הרשומה נמחקה"); });
     });
@@ -607,6 +637,7 @@ window.__rt = {
   syncFlush:function(){ return RT.sync.flush(); },
   ui:function(){ return JSON.parse(JSON.stringify(RT.ui)); },
   rec:function(){ return RT.recorder.state(); },
+  unrated:function(){ return RT.unrated(7).map(function(o){ return {id:o.id,date:o.x.date,work:o.x.work}; }); },
   handGap:RT.handGap, summary:RT.buildTextSummary, wake:function(){ return RT.wake.mode; }
 };
 })();
