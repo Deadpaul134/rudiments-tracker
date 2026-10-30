@@ -281,16 +281,17 @@
         </div>
       </div>
       <div class="card" id="syncCard">
-        <div class="card-h"><h2><i class="sync-dot" data-sync-dot></i>סנכרון לגוגל שיטס</h2></div>
+        <div class="card-h"><h2><i class="sync-dot" data-sync-dot></i>סנכרון בין מכשירים</h2></div>
         <div class="sync-st small" id="syncStatus" role="status"></div>
-        <label class="fld"><span>כתובת ה-Web App</span><input type="url" class="tin" id="syncUrl" dir="ltr" spellcheck="false" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec"></label>
+        <label class="fld"><span>קוד גישה</span><input type="password" class="tin" id="syncCode" dir="ltr" spellcheck="false" autocomplete="off"></label>
+        <label class="fld" id="syncServerFld" hidden><span>כתובת השרת (רק כשהקובץ נפתח מהמחשב)</span><input type="url" class="tin" id="syncServer" dir="ltr" spellcheck="false" autocomplete="off" placeholder="https://rudiments-tracker.pages.dev"></label>
         <div class="row gap wrap">
-          <button type="button" class="btn" id="syncSave">שמור כתובת</button>
+          <button type="button" class="btn" id="syncSave">שמור</button>
           <button type="button" class="btn" id="syncTest">בדוק חיבור</button>
-          <button type="button" class="btn primary" id="syncAll">סנכרן הכל עכשיו</button>
-          <a class="link" id="syncSheetLink" href="#" target="_blank" rel="noopener" hidden>פתח את הגיליון ↗</a>
+          <button type="button" class="btn primary" id="syncNow">סנכרן עכשיו</button>
+          <button type="button" class="btn" id="syncExport">ייצוא לקובץ</button>
         </div>
-        <p class="muted small">כל מדידה, טמפו עבודה עם דירוג וסוף שגרה נשלחים לגיליון אוטומטית. בלי אינטרנט הכל נשמר בתור ונשלח כשהחיבור חוזר. „סנכרן הכל” כותב מחדש את כל ההיסטוריה. הוראות התקנה בקובץ ההוראות בתיקיית הסנכרון במאגר.</p>
+        <p class="muted small">הסנכרון רץ לבד בפתיחה ואחרי כל רשומה. בלי אינטרנט השינויים נשמרים במכשיר ונשלחים כשהחיבור חוזר. מחיקה של רשומה מוחקת אותה בכל המכשירים. המקסימום הנקי אף פעם לא יורד בגלל סנכרון.</p>
       </div>
       <div class="card">
         <div class="card-h"><h2><i class="dot"></i>ייבוא וייצוא</h2></div>

@@ -5,7 +5,8 @@
   "description": "Rudiments Tracker v2 – Hebrew RTL drum-rudiments practice tracker (static, no build)",
   "scripts": {
     "test": "playwright test",
-    "screenshots": "node scripts/screenshots.js"
+    "screenshots": "node scripts/screenshots.js",
+    "build:pages": "node scripts/build-pages.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1"

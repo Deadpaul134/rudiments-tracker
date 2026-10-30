@@ -1,0 +1,16 @@
+# Cloudflare Pages project for Rudiments Tracker (static app + /api/sync function).
+# Static files are copied to dist/ by `npm run build:pages` so tests, reference data and
+# node_modules are never published.
+name = "rudiments-tracker"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rudiments-sync"
+# Paste the id printed by `npx wrangler d1 create rudiments-sync` (see SYNC_REPORT.md).
+database_id = "90388c35-ac62-4899-9bdf-7fd478708fb8"
+migrations_dir = "migrations"
+
+# The access code is a secret, never stored here:
+#   npx wrangler pages secret put SYNC_CODE --project-name rudiments-tracker

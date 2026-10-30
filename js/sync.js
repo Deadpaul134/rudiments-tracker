@@ -1,153 +1,238 @@
-/* Google Sheets sync via the Apps Script web app (protocol unchanged from v1 – see sheets-sync/Code.gs).
-   POST text/plain JSON {action:"batch", measurements, sessions, deletes, snapshot[, full]} – no CORS preflight.
-   Offline queue, exponential retry, de-dupe by entry id. */
+/* Two-way sync with the Cloudflare D1 endpoint (functions/api/sync.js).
+   Every syncable thing becomes a record {kind,id,data}. Local changes are found by diffing against the last
+   synced hash of each record (so every mutation path is covered), stamped with the time they were noticed,
+   and sent; server changes after our cursor come back and are applied. Last change wins per record, except
+   that a clean max never drops (the server keeps the higher clean/hard). Entries and sessions are deleted
+   remotely only through an explicit delete (RT.sync.del). */
 (function(){
 "use strict";
 var RT = window.RT;
-var KEY = RT.KEYS.sync;
-var busy=false, timer=null, fails=0, snapAt=0;
-var S = (function(){ var s=RT.readJSON(KEY,{}); if(!RT.isObj(s)) s={};
-  if(!Array.isArray(s.queue)) s.queue=[]; if(typeof s.url!=="string") s.url="";
-  s.lastOk=+s.lastOk||0; s.lastErr=s.lastErr?String(s.lastErr):""; return s; })();
-var fns=[];
-function save(){ RT.writeJSON(KEY,S); fns.forEach(function(f){ f(); }); }
+var KEY = RT.STORE_KEY+"-d1sync";
+var CHUNK = 500;
+try{ localStorage.removeItem(RT.KEYS.sync); }catch(e){}          // old Google Sheets queue
 
-function entryId(subId,x){ return subId+"|"+x.date; }
-function measurementRow(subId,x){
-  var s=RT.SUB[subId], ex=RT.EXOF[subId], d=new Date(x.date), w=RT.isWork(x), ok=!isNaN(d);
-  var notes=[];
-  if(x.rating) notes.push("דירוג: "+RT.RATINGS[x.rating]);
-  if(x.breakBpm) notes.push("נשבר ב-"+x.breakBpm+" BPM");
-  if(x.notes) notes.push(x.notes);
-  return {id:entryId(subId,x), ts:ok?RT.ymd(d)+" "+RT.hm(d):String(x.date), date:ok?RT.ymd(d):String(x.date).slice(0,10),
-    category:ex?RT.catName(ex.cat):"", rudiment:ex?ex.name:subId, sub:s?s.name:subId,
-    type:w?"טמפו עבודה":"מקסימום נקי", clean:w?(x.work||null):(x.clean||null), hard:w?null:(x.hard||null),
-    notes:notes.join(" · "), subdiv:RT.subdivOf(x), broke:(x.broke||[]).join(", "), subId:subId};
+var S = (function(){
+  var s=RT.readJSON(KEY,{}); if(!RT.isObj(s)) s={};
+  s.code=typeof s.code==="string"?s.code:""; s.server=typeof s.server==="string"?s.server:"";
+  s.cursor=+s.cursor||0; s.lastOk=+s.lastOk||0; s.lastErr=s.lastErr?String(s.lastErr):""; s.authErr=!!s.authErr;
+  if(!RT.isObj(s.meta)) s.meta={}; if(!RT.isObj(s.dirty)) s.dirty={};
+  s.counts=RT.isObj(s.counts)?s.counts:null; s.received=+s.received||0;
+  return s;
+})();
+var busy=false, again=false, againFull=false, timer=null, fails=0, applying=false, fns=[], appliedFns=[];
+function save(){ RT.writeJSON(KEY,S); fns.forEach(function(f){ try{ f(); }catch(e){} }); }
+
+/* ---------- records ---------- */
+function hash(v){ var s=JSON.stringify(v), h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return (h>>>0).toString(36)+"."+s.length; }
+function dayRecord(pl,k){
+  var o={}, any=false;
+  if(pl.days[k]!=null){ o.on=pl.days[k]; any=true; }
+  ["steps","kit","sessions"].forEach(function(f){ if(RT.isObj(pl[f]) && pl[f][k]!=null){ o[f]=pl[f][k]; any=true; } });
+  return any?o:null;
 }
-function allMeasurementRows(){
-  var rows=[];
-  Object.keys(RT.state.entries).forEach(function(id){ RT.entries(id).forEach(function(x){ if(RT.isObj(x)&&x.date) rows.push(measurementRow(id,x)); }); });
-  rows.sort(function(a,b){ return a.ts<b.ts?-1:a.ts>b.ts?1:0; });
-  return rows;
-}
-// logged sessions + one row per marked practice day without a logged session (history from before the log existed)
-function allSessionRows(){
-  var log=Array.isArray(RT.plan.log)?RT.plan.log.slice():[], have={}, R=RT.routine();
-  log.forEach(function(r){ have[r.date]=1; });
-  Object.keys(RT.plan.days).forEach(function(k){
-    if(!RT.plan.days[k]||have[k]) return;
-    var st=Array.isArray(RT.plan.steps[k])?RT.plan.steps[k].filter(function(i){ return R[i]; }):[];
-    log.push({id:"day_"+k, date:k, ts:k, kind:"יום תרגול (סימון)", minutes:st.length?st.reduce(function(a,i){ return a+R[i].min; },0):"",
-      steps:st.map(function(i){ return (i+1)+". "+R[i].title; }).join(" | "), notes:"שוחזר מסימון ימי התרגול – הקצבים של אותו יום לא נשמרו"});
+function collect(){
+  var R={}, st=RT.state, pl=RT.plan;
+  Object.keys(st.entries||{}).forEach(function(sub){
+    (Array.isArray(st.entries[sub])?st.entries[sub]:[]).forEach(function(x){ if(RT.isObj(x)&&x.date) R["e:"+sub+"|"+x.date]=x; });
   });
-  log.sort(function(a,b){ return String(a.ts)<String(b.ts)?-1:String(a.ts)>String(b.ts)?1:0; });
-  return log;
+  (Array.isArray(pl.log)?pl.log:[]).forEach(function(r){ if(RT.isObj(r)&&r.id) R["s:"+r.id]=r; });
+  var dk={}; ["days","steps","kit","sessions"].forEach(function(f){ if(RT.isObj(pl[f])) Object.keys(pl[f]).forEach(function(k){ dk[k]=1; }); });
+  Object.keys(dk).forEach(function(k){ var d=dayRecord(pl,k); if(d) R["d:"+k]=d; });
+  (st.customEx||[]).forEach(function(e){ if(RT.isObj(e)&&e.id) R["x:"+e.id]=e; });
+  Object.keys(st.custom||{}).forEach(function(ex){ (Array.isArray(st.custom[ex])?st.custom[ex]:[]).forEach(function(c){ if(RT.isObj(c)&&c.id) R["c:"+c.id]={ex:ex, sub:c}; }); });
+  R["p:routine"]=pl.routine2; R["p:weekly"]=pl.weekly;
+  return R;
 }
-function snapshot(){
-  var keys={};
-  try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i);
-    if(k.indexOf(RT.STORE_KEY)!==0 || k===KEY || k===RT.KEYS.backup || k===RT.KEYS.premig) continue;
-    var v=localStorage.getItem(k); try{ keys[k]=JSON.parse(v); }catch(e){ keys[k]=v; } } }catch(e){}
-  var txt=""; try{ txt=RT.buildTextSummary(); }catch(e){}
-  return {app:"rimon-rudiments", version:3, exported:new Date().toISOString(), localStorage:keys, summaryText:txt};
+// notice local changes; returns true when something new has to be sent
+function scan(){
+  if(applying) return false;
+  var R=collect(), now=Date.now(), ch=false;
+  Object.keys(R).forEach(function(k){
+    var h=hash(R[k]), m=S.meta[k];
+    if(!m || m[0]!==h || m[2]){ S.meta[k]=[h,now]; S.dirty[k]=1; ch=true; }
+  });
+  Object.keys(S.meta).forEach(function(k){
+    if(R[k] || S.meta[k][2]) return;
+    var kind=k.charAt(0);
+    if(kind==="e"||kind==="s"){ delete S.meta[k]; delete S.dirty[k]; }   // no explicit delete → never removed elsewhere
+    else { S.meta[k]=[null,now,1]; S.dirty[k]=1; ch=true; }
+  });
+  save();
+  return ch;
 }
-function enqueue(item){
-  if(!S.url) return;
-  if(item.k==="m"||item.k==="s") S.queue=S.queue.filter(function(q){ return !(q.k===item.k && q.id===item.id); });
-  if(item.k==="d") S.queue=S.queue.filter(function(q){ return !(q.k==="m" && q.id===item.id); });
-  S.queue.push(item); save(); schedule(400);
+
+/* ---------- applying server records ---------- */
+function byDate(a,b){ return new Date(a.date)-new Date(b.date); }
+function applyRecord(kind,id,data){
+  var st=RT.state, pl=RT.plan, i, arr;
+  if(kind==="e"){
+    var p=id.indexOf("|"), sub=id.slice(0,p), date=id.slice(p+1);
+    arr=Array.isArray(st.entries[sub])?st.entries[sub]:(st.entries[sub]=[]);
+    for(i=0;i<arr.length;i++) if(arr[i]&&arr[i].date===date) break;
+    if(data==null){ if(i<arr.length) arr.splice(i,1); if(!arr.length) delete st.entries[sub]; }
+    else if(i<arr.length) arr[i]=data; else { arr.push(data); arr.sort(byDate); }
+  } else if(kind==="s"){
+    if(!Array.isArray(pl.log)) pl.log=[];
+    for(i=0;i<pl.log.length;i++) if(pl.log[i]&&pl.log[i].id===id) break;
+    if(data==null){ if(i<pl.log.length) pl.log.splice(i,1); }
+    else if(i<pl.log.length) pl.log[i]=data;
+    else { pl.log.push(data); pl.log.sort(function(a,b){ return String(a.ts)<String(b.ts)?-1:String(a.ts)>String(b.ts)?1:0; }); }
+  } else if(kind==="d"){
+    var map={on:"days",steps:"steps",kit:"kit",sessions:"sessions"};
+    Object.keys(map).forEach(function(f){ var t=map[f]; if(!RT.isObj(pl[t])) pl[t]={};
+      if(data!=null && data[f]!=null) pl[t][id]=data[f]; else delete pl[t][id]; });
+  } else if(kind==="x"){
+    st.customEx=(st.customEx||[]).filter(function(e){ return e.id!==id; });
+    if(data!=null) st.customEx.push(data);
+  } else if(kind==="c"){
+    Object.keys(st.custom).forEach(function(ex){ if(Array.isArray(st.custom[ex])) st.custom[ex]=st.custom[ex].filter(function(c){ return c.id!==id; }); });
+    if(data!=null && RT.isObj(data.sub)){ if(!Array.isArray(st.custom[data.ex])) st.custom[data.ex]=[]; st.custom[data.ex].push(data.sub); }
+  } else if(kind==="p"){
+    if(id==="routine" && Array.isArray(data) && data.length) pl.routine2=data;
+    if(id==="weekly" && Array.isArray(data)) pl.weekly=data;
+  }
 }
-function touch(){ if(!S.url) return; snapAt=Date.now(); S.snapDirty=1; save(); schedule(2500); }
-function full(){ if(!S.url) return false; S.queue=[{k:"full"}]; save(); clearTimeout(timer); fails=0; flush(); return true; }
-function schedule(ms){ if(!S.url) return; clearTimeout(timer); timer=setTimeout(flush, ms); }
-function post(body){
-  var payload=JSON.stringify(body), opts={method:"POST", body:payload, headers:{"Content-Type":"text/plain;charset=utf-8"}, redirect:"follow", cache:"no-store"};
-  return fetch(S.url, opts).then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.text(); })
-    .then(function(t){ var j; try{ j=JSON.parse(t); }catch(e){ throw new Error("תשובה לא צפויה מגוגל – בדוק שהפריסה היא Web app עם גישה Anyone"); }
-        if(!j || j.ok!==true) throw new Error((j&&j.error)||"שגיאה בסקריפט"); return j; },
-      function(err){
-        // CORS-level failure while online: resend as an opaque "simple" request (server de-dupes by id)
-        if(err && err.name==="TypeError" && navigator.onLine!==false)
-          return fetch(S.url, {method:"POST", mode:"no-cors", body:payload, headers:{"Content-Type":"text/plain;charset=utf-8"}}).then(function(){ return {ok:true, opaque:true}; });
-        throw err;
-      });
+// first sync of this device: the cloud copy is adopted, but practice days and clean max are merged
+function adoptMerge(kind,local,remote){
+  if(local==null || remote==null) return remote;
+  if(kind==="d"){
+    var o=JSON.parse(JSON.stringify(remote));
+    if(local.on && !o.on) o.on=local.on;
+    if(Array.isArray(local.steps)){ var s=Array.isArray(o.steps)?o.steps.slice():[];
+      local.steps.forEach(function(x){ if(s.indexOf(x)<0) s.push(x); }); s.sort(function(a,b){ return a-b; }); o.steps=s; }
+    return o;
+  }
+  if(kind==="e" && !RT.isWork(local) && !RT.isWork(remote)){
+    var e=JSON.parse(JSON.stringify(remote));
+    ["clean","hard"].forEach(function(f){ if((+local[f]||0)>(+e[f]||0)) e[f]=local[f]; });
+    return e;
+  }
+  return remote;
 }
-function flush(){
+function applyRemote(rows, adopt){
+  if(!rows.length) return 0;
+  var R=collect(), n=0, now=Date.now();
+  applying=true;
+  try{
+    rows.forEach(function(r){
+      var k=r.kind+":"+r.id, m=S.meta[k], data=r.deleted?null:r.data;
+      if(!adopt && S.dirty[k] && m && m[1]>r.updatedAt) return;        // our newer change goes up next
+      var local=R[k], use=adopt?adoptMerge(r.kind,local,data):data;
+      var same = use==null ? local==null : (local!=null && hash(local)===hash(use));
+      if(!same){ applyRecord(r.kind,r.id,use==null?null:JSON.parse(JSON.stringify(use))); n++; }
+      if(use==null) S.meta[k]=[null,r.updatedAt,1];
+      else if(adopt && hash(use)!==hash(data)){ S.meta[k]=[hash(use),now]; S.dirty[k]=1; return; }
+      else S.meta[k]=[hash(use),r.updatedAt];
+      delete S.dirty[k];
+    });
+    if(n){ RT.indexSubs(); RT.save(); RT.savePlan(); }
+  } finally { applying=false; }
+  if(n) appliedFns.forEach(function(f){ try{ f(n); }catch(e){ console.error(e); } });
+  return n;
+}
+
+/* ---------- transport ---------- */
+function endpoint(){
+  var s=S.server.trim();
+  if(s){ s=s.replace(/\/+$/,""); return /\/api\/sync$/.test(s)?s:s+"/api/sync"; }
+  return /^https?:$/.test(location.protocol) ? "/api/sync" : "";
+}
+function configured(){ return !!(S.code && endpoint()); }
+// text/plain POST with the code in the body → a "simple" request, no CORS preflight
+function call(body){
+  var opts={method:"POST", cache:"no-store", headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify(Object.assign({code:S.code}, body))};
+  return fetch(endpoint(), opts).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if(r.status===401){ var e=new Error("קוד הגישה שגוי"); e.auth=true; throw e; }
+      if(!r.ok || !j || j.ok!==true) throw new Error(j&&j.error==="not-configured"?"השרת לא מוגדר (חסר קוד גישה בשרת)":"שגיאת שרת ("+r.status+")");
+      return j;
+    });
+  }, function(){ throw new Error(navigator.onLine===false?"אין חיבור לאינטרנט":"השרת לא זמין"); });
+}
+function round(since, keys, adopt){
+  var R=keys.length?collect():{};
+  var changes=keys.map(function(k){ var m=S.meta[k], c={kind:k.charAt(0), id:k.slice(2), updatedAt:m[1], deleted:!!m[2]};
+    if(!c.deleted) c.data=R[k]; return c; })
+    .filter(function(c){ return c.deleted || c.data!==undefined; });
+  var sent={}; keys.forEach(function(k){ sent[k]=S.meta[k]&&S.meta[k][1]; });
+  return call({since:since, changes:changes}).then(function(j){
+    // a sent key is clean unless it changed again while the request was in flight
+    keys.forEach(function(k){ if(S.meta[k] && S.meta[k][1]===sent[k]) delete S.dirty[k]; });
+    var rows=(j.changes||[]).filter(function(r){ return r && r.kind && typeof r.id==="string"; });
+    var n=applyRemote(rows, adopt);
+    S.cursor=+j.cursor||0; if(j.counts) S.counts=j.counts;
+    return n;
+  });
+}
+function run(full){
+  var adopt=!S.lastOk, received=0;
+  var first = adopt ? round(0,[],true).then(function(n){ received+=n; }) : Promise.resolve();
+  return first.then(function(){
+    scan();
+    var since=full?0:S.cursor, loops=0;
+    function next(){
+      var keys=Object.keys(S.dirty).filter(function(k){ return S.meta[k]; }).slice(0,CHUNK);
+      if(loops>0 && !keys.length) return Promise.resolve();
+      loops++;
+      return round(since,keys,false).then(function(n){ received+=n; since=S.cursor;
+        if(loops<50 && Object.keys(S.dirty).length) return next(); });
+    }
+    return next();
+  }).then(function(){ return received; });
+}
+function sync(full){
   clearTimeout(timer);
-  if(busy || !S.url){ save(); return Promise.resolve(false); }
-  if(!S.queue.length && !S.snapDirty){ save(); return Promise.resolve(true); }
-  var items=S.queue.slice(), isFull=items.some(function(q){ return q.k==="full"; }), body;
-  if(isFull) body={action:"batch", full:true, measurements:allMeasurementRows(), sessions:allSessionRows(), snapshot:snapshot()};
-  else body={action:"batch",
-    measurements:items.filter(function(q){ return q.k==="m"; }).map(function(q){ return q.row; }),
-    sessions:items.filter(function(q){ return q.k==="s"; }).map(function(q){ return q.row; }),
-    deletes:items.filter(function(q){ return q.k==="d"; }).map(function(q){ return q.id; }),
-    snapshot:snapshot()};
-  var touchAt=Date.now(); busy=true; save();
-  return post(body).then(function(res){
-    S.queue=S.queue.filter(function(q){ return items.indexOf(q)<0; });
-    if(snapAt<=touchAt) S.snapDirty=0;
-    S.lastOk=Date.now(); S.lastErr=""; S.opaque=!!res.opaque; fails=0;
-    if(res.url) S.sheetUrl=res.url;
-    busy=false; save();
-    if(isFull && RT.toast) RT.toast(res.opaque?"נשלח לגיליון (בלי אישור מגוגל)":"כל ההיסטוריה סונכרנה לגיליון ✓");
-    if(S.queue.length) schedule(300);
+  if(!configured()) return Promise.resolve(false);
+  if(busy){ again=true; againFull=againFull||!!full; return Promise.resolve(false); }
+  busy=true; save();
+  return run(!!full).then(function(n){
+    busy=false; fails=0; S.lastOk=Date.now(); S.lastErr=""; S.authErr=false; S.received=n; save();
+    if(full && RT.toast) RT.toast("הסנכרון הושלם ✓"+(n?" · התקבלו "+n+" שינויים":""));
+    if(again){ var f=againFull; again=againFull=false; schedule(200,f); }
     return true;
   }, function(err){
-    busy=false; fails++;
-    S.lastErr=(navigator.onLine===false?"אין חיבור לאינטרנט":String(err&&err.message||err||"שגיאה"));
-    save();
-    if(isFull && RT.toast) RT.toast("הסנכרון נכשל – ננסה שוב אוטומטית");
-    schedule(Math.min(300000, 15000*Math.pow(2,Math.min(5,fails-1))));
+    busy=false; fails++; S.lastErr=String(err&&err.message||err||"שגיאה"); S.authErr=!!(err&&err.auth); save();
+    if(full && RT.toast) RT.toast("הסנכרון נכשל: "+S.lastErr);
+    again=againFull=false;
+    if(!S.authErr) schedule(Math.min(300000, 15000*Math.pow(2,Math.min(5,fails-1))));
     return false;
   });
 }
+function schedule(ms, full){ if(!configured()) return; clearTimeout(timer); timer=setTimeout(function(){ sync(full); }, ms); }
+
 function status(){
-  if(!S.url) return "none";
-  if(S.lastErr && (S.queue.length||S.snapDirty)) return "err";
-  if(busy || S.queue.length || S.snapDirty) return "wait";
-  return S.lastOk ? "ok" : "wait";
+  if(!configured()) return "none";
+  if(S.lastErr) return "err";
+  if(busy || Object.keys(S.dirty).length || !S.lastOk) return "wait";
+  return "ok";
 }
-function jsonp(url, ms){
-  return new Promise(function(res,rej){
-    var cb="__rudSync"+Date.now().toString(36)+Math.floor(Math.random()*1e4), s=document.createElement("script"), done=false;
-    function fin(){ done=true; clearTimeout(to); try{ delete window[cb]; }catch(e){ window[cb]=undefined; } if(s.parentNode) s.parentNode.removeChild(s); }
-    var to=setTimeout(function(){ if(done) return; fin(); rej(new Error("אין תשובה מגוגל")); }, ms||15000);
-    window[cb]=function(d){ if(done) return; fin(); res(d); };
-    s.onerror=function(){ if(done) return; fin(); rej(new Error("הכתובת לא נטענה")); };
-    s.src=url+(url.indexOf("?")<0?"?":"&")+"callback="+cb+"&t="+Date.now();
-    document.head.appendChild(s);
-  });
+function resetLink(){ S.cursor=0; S.lastOk=0; S.meta={}; S.dirty={}; S.counts=null; S.received=0; S.lastErr=""; S.authErr=false; }
+function setConfig(code, server){
+  code=String(code||"").trim(); server=String(server||"").trim();
+  if(server && !/^https?:\/\/\S+$/.test(server)) return false;
+  if(code!==S.code || server!==S.server){ S.code=code; S.server=server; resetLink(); fails=0; }
+  save();
+  if(configured()) schedule(50);
+  return true;
 }
 function test(){
-  var u=S.url; if(!u) return Promise.reject(new Error("קודם הדבק ושמור את כתובת ה-Web App"));
-  return fetch(u+(u.indexOf("?")<0?"?":"&")+"t="+Date.now(), {cache:"no-store", redirect:"follow"})
-    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
-    .catch(function(){ return jsonp(u); })
-    .then(function(j){
-      if(!j || j.ok!==true) throw new Error((j&&j.error)||"תשובה לא צפויה");
-      if(j.url) S.sheetUrl=j.url; S.lastErr=""; save();
-      return j;
-    }, function(e){ S.lastErr="בדיקת חיבור נכשלה: "+(e&&e.message||e); save(); throw e; });
-}
-function setUrl(u){
-  u=String(u||"").trim();
-  if(u && !/^https:\/\/\S+$/.test(u)) return false;
-  var changed=u!==S.url; S.url=u;
-  if(changed){ S.queue=[]; S.lastOk=0; S.lastErr=""; S.sheetUrl=""; S.snapDirty=0; }
-  save(); return true;
+  if(!configured()) return Promise.reject(new Error("קודם הזן קוד גישה"));
+  return call({ping:true}).then(function(j){ if(j.counts) S.counts=j.counts; S.lastErr=""; S.authErr=false; save(); return j; },
+    function(e){ S.lastErr=e.message; S.authErr=!!e.auth; save(); throw e; });
 }
 
 RT.sync = {
-  entry:function(subId,x){ enqueue({k:"m", id:entryId(subId,x), row:measurementRow(subId,x)}); },
-  del:function(subId,x){ enqueue({k:"d", id:entryId(subId,x)}); },
-  session:function(row){ enqueue({k:"s", id:row.id, row:row}); },
-  touch:touch, full:full, flush:function(){ fails=0; return flush(); }, test:test, status:status, setUrl:setUrl,
-  state:function(){ return S; }, busy:function(){ return busy; }, onChange:function(f){ fns.push(f); },
-  measurementRows:allMeasurementRows, sessionRows:allSessionRows
+  entry:function(){}, session:function(){},                // picked up by the change scan
+  del:function(subId,x){ if(!x||!x.date) return; S.meta["e:"+subId+"|"+x.date]=[null,Date.now(),1]; S.dirty["e:"+subId+"|"+x.date]=1; save(); schedule(1500); },
+  full:function(){ if(!configured()) return false; fails=0; sync(true); return true; },
+  flush:function(){ fails=0; return sync(false); },
+  test:test, status:status, setConfig:setConfig, configured:configured, endpoint:endpoint,
+  state:function(){ return S; }, busy:function(){ return busy; }, pending:function(){ return Object.keys(S.dirty).length; },
+  onChange:function(f){ fns.push(f); }, onApplied:function(f){ appliedFns.push(f); }
 };
-RT.onChange(function(){ touch(); });
-window.addEventListener("online",function(){ fails=0; flush(); });
-document.addEventListener("visibilitychange",function(){ if(!document.hidden && S.url && (S.queue.length||S.snapDirty)) flush(); });
-if(S.url && (S.queue.length||S.snapDirty)) schedule(1500);
+RT.onChange(function(){ if(applying) return; if(scan() && configured()) schedule(1500); });
+window.addEventListener("online",function(){ fails=0; if(configured()) sync(false); });
+document.addEventListener("visibilitychange",function(){ if(!document.hidden && configured() && !busy) sync(false); });
+if(configured()) schedule(300);                          // sync on load
 })();
