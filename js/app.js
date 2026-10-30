@@ -377,6 +377,7 @@ function renderSettings(){
   $("setRest").value=RT.settings.restSec; $("setMStart").value=RT.settings.measureStart;
   $("setMStep").value=RT.settings.measureStep; $("setMEvery").value=RT.settings.measureEvery;
   $("setSubClicks").checked=RT.settings.subClicks!==false;
+  renderMetroSound();
   var meta=RT.readJSON(RT.KEYS.meta,{})||{};
   $("migInfo").textContent = meta.fromV1 ? "הנתונים מגרסה 1 הועברו אוטומטית ב-"+RT.fmtDate(meta.at,true)+". עותק מלא של נתוני גרסה 1 נשמר בדפדפן כגיבוי." : "";
   renderEditor(); renderWeeklyEditor();
@@ -427,6 +428,24 @@ function bindNum(id,key,min,max){
 }
 bindNum("setRest","restSec",3,120); bindNum("setMStart","measureStart",0,100); bindNum("setMStep","measureStep",1,30); bindNum("setMEvery","measureEvery",5,300);
 $("setSubClicks").addEventListener("change",function(){ RT.settings.subClicks=$("setSubClicks").checked; RT.saveSettings(); });
+/* metronome sound / volume / loud mode (settings card + compact selector on the practice screen) */
+function renderMetroSound(){
+  var S=RT.settings;
+  document.querySelectorAll("#metroSoundSeg [data-sound]").forEach(function(b){ var on=b.dataset.sound===S.metroSound; b.classList.toggle("on",on); b.setAttribute("aria-checked",String(on)); });
+  $("pSound").value=S.metroSound;
+  $("setVol").value=S.metroVolume; $("setVolVal").textContent=S.metroVolume;
+  $("setLoud").checked=S.metroLoud;
+}
+function setMetro(patch){
+  Object.assign(RT.settings,patch); RT.normMetroSettings(RT.settings); RT.saveSettings();
+  RT.metro.applySound(); renderMetroSound();
+}
+document.querySelectorAll("#metroSoundSeg [data-sound]").forEach(function(b){ b.addEventListener("click",function(){ setMetro({metroSound:b.dataset.sound}); RT.metro.preview(); }); });
+$("pSound").addEventListener("change",function(){ setMetro({metroSound:$("pSound").value}); this.blur(); });
+$("setVol").addEventListener("input",function(){ setMetro({metroVolume:+$("setVol").value}); });
+$("setLoud").addEventListener("change",function(){ setMetro({metroLoud:$("setLoud").checked}); });
+$("metroPreview").addEventListener("click",function(){ RT.metro.preview(); });
+renderMetroSound();
 
 /* routine editor */
 function linkOptions(sel){
@@ -603,6 +622,7 @@ window.__rt = {
   P:function(){ return JSON.parse(JSON.stringify({phase:P.phase,idx:P.idx,paused:P.paused,restIdx:P.restIdx,done:P.done,skipped:P.skipped,results:Object.keys(P.results).reduce(function(o,k){ o[k]={bpm:P.results[k].bpm,rating:P.results[k].rating||null}; return o; },{})})); },
   M:function(){ return {phase:M.phase,bpm:M.bpm,start:M.start,hard:M.hard,brk:M.brk,sub:M.sub,queue:M.queue,qi:M.qi}; },
   metro:function(){ return {bpm:RT.metro.bpm,running:RT.metro.running,sub:RT.metro.sub,gap:Object.assign({},RT.metro.gap),log:RT.metro.log.slice()}; },
+  settings:function(){ return JSON.parse(JSON.stringify(RT.settings)); },
   sync:function(){ var S=RT.sync.state(); return JSON.parse(JSON.stringify({cursor:S.cursor,lastOk:S.lastOk,lastErr:S.lastErr,pending:RT.sync.pending(),counts:S.counts,received:S.received,status:RT.sync.status(),busy:RT.sync.busy()})); },
   syncFlush:function(){ return RT.sync.flush(); },
   ui:function(){ return JSON.parse(JSON.stringify(RT.ui)); },
