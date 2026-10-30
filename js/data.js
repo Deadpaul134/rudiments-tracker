@@ -274,6 +274,28 @@ RT.logWork=function(id,bpm,rating,notes){
   return RT.addEntry(id,o);
 };
 
+/* ---------- rating after the fact (working tempo only – a clean max is never touched) ---------- */
+RT.setRating=function(id,x,r){
+  if(!x) return false;
+  var cur=entries(id).filter(function(e){ return e && e.date===x.date; })[0];   // a sync may have replaced the object
+  if(!cur || !isWork(cur)) return false;
+  if(r && RATINGS[r]) cur.rating=r; else delete cur.rating;
+  if(cur!==x){ if(cur.rating) x.rating=cur.rating; else delete x.rating; }
+  RT.updateEntry(id,cur);
+  return true;
+};
+// routine steps from the last `days` days (today included) that were never rated, newest first
+RT.unrated=function(days){
+  var since=addDays(dayStart(new Date()),-((days||7)-1)), out=[];
+  Object.keys(RT.state.entries).forEach(function(id){
+    entries(id).forEach(function(x){
+      if(!isWork(x) || x.rating || x.src!=="routine") return;
+      var d=new Date(x.date); if(!isNaN(d) && d>=since) out.push({id:id, x:x});
+    });
+  });
+  return out.sort(function(a,b){ return new Date(b.x.date)-new Date(a.x.date); });
+};
+
 /* ---------- clean streak → optional +4 BPM target suggestion (only ever applied by the user) ---------- */
 var RAISE_AFTER=3, RAISE_BY=4;
 RT.RAISE_AFTER=RAISE_AFTER; RT.RAISE_BY=RAISE_BY;
