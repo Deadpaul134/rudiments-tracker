@@ -14,3 +14,5 @@ migrations_dir = "migrations"
 
 # The access code is a secret, never stored here:
 #   npx wrangler pages secret put SYNC_CODE --project-name rudiments-tracker
+# Google sign-in (public OAuth client id, not a secret). Do not commit the value.
+#   npx wrangler pages secret put GOOGLE_CLIENT_ID --project-name rudiments-tracker

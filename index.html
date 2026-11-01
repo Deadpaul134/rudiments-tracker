@@ -282,8 +282,31 @@
       </div>
       <div class="card" id="syncCard">
         <div class="card-h"><h2><i class="sync-dot" data-sync-dot></i>סנכרון בין מכשירים</h2></div>
+        <div class="account" id="googleSlot" hidden>
+          <div id="googleSigned" hidden>
+            <div class="account-row">
+              <span class="who" id="googleWho"></span>
+              <button type="button" class="btn sm" id="googleOut">יציאה</button>
+            </div>
+          </div>
+          <div id="googleBtn"></div>
+          <p class="muted small" id="googleHint"></p>
+          <p class="muted small" id="claimPending" hidden>בודק את החשבון…</p>
+          <p class="small" id="claimedNote" hidden>ההיסטוריה משויכת לחשבון הזה.</p>
+          <div id="claimBox" hidden>
+            <label class="fld"><span>קוד גישה לשיוך ההיסטוריה</span><input type="password" class="tin" id="claimCode" dir="ltr" spellcheck="false" autocomplete="off"></label>
+            <div class="row gap wrap">
+              <button type="button" class="btn primary" id="claimBtn">שייך את ההיסטוריה לחשבון</button>
+              <button type="button" class="btn" id="claimSkip">המשך בלי שיוך</button>
+            </div>
+            <p class="muted small">פעם אחת: משייך את הנתונים שכבר בענן לחשבון Google הזה. אחר כך אי אפשר לשייך אותם לחשבון אחר.</p>
+          </div>
+          <button type="button" class="btn sm" id="claimLink" hidden>שייך היסטוריה קיימת</button>
+        </div>
         <div class="sync-st small" id="syncStatus" role="status"></div>
+        <div id="legacyCode">
         <label class="fld"><span>קוד גישה</span><input type="password" class="tin" id="syncCode" dir="ltr" spellcheck="false" autocomplete="off"></label>
+        </div>
         <label class="fld" id="syncServerFld" hidden><span>כתובת השרת (רק כשהקובץ נפתח מהמחשב)</span><input type="url" class="tin" id="syncServer" dir="ltr" spellcheck="false" autocomplete="off" placeholder="https://rudiments-tracker.pages.dev"></label>
         <div class="row gap wrap">
           <button type="button" class="btn" id="syncSave">שמור</button>

@@ -1,5 +1,5 @@
 // Copies only the static app (index.html, css/, js/) into dist/ for Cloudflare Pages.
-// The /api/sync function is picked up from ./functions by Cloudflare itself.
+// Pages Functions (/api/sync, /api/config, /api/claim) are picked up from ./functions by Cloudflare itself.
 const fs = require('fs');
 const path = require('path');
 
