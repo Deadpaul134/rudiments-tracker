@@ -17,10 +17,18 @@ var S = (function(){
   s.cursor=+s.cursor||0; s.lastOk=+s.lastOk||0; s.lastErr=s.lastErr?String(s.lastErr):""; s.authErr=!!s.authErr;
   if(!RT.isObj(s.meta)) s.meta={}; if(!RT.isObj(s.dirty)) s.dirty={};
   s.counts=RT.isObj(s.counts)?s.counts:null; s.received=+s.received||0;
+  s.idToken=typeof s.idToken==="string"?s.idToken:"";
+  s.sub=typeof s.sub==="string"?s.sub:"";
+  s.email=typeof s.email==="string"?s.email:"";
+  s.name=typeof s.name==="string"?s.name:"";
+  s.exp=+s.exp||0; s.hold=!!s.hold; s.claimed=!!s.claimed; s.claimChecked=!!s.claimChecked;
   return s;
 })();
+var PROFILES = RT.STORE_KEY+"-profiles";
+var clientId="";
 var busy=false, again=false, againFull=false, timer=null, fails=0, applying=false, fns=[], appliedFns=[];
-function save(){ RT.writeJSON(KEY,S); fns.forEach(function(f){ try{ f(); }catch(e){} }); }
+function save(){ RT.writeJSON(KEY,S); notify(); }
+function notify(){ fns.forEach(function(f){ try{ f(); }catch(e){} }); }
 
 /* ---------- records ---------- */
 function hash(v){ var s=JSON.stringify(v), h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return (h>>>0).toString(36)+"."+s.length; }
@@ -137,15 +145,44 @@ function endpoint(){
   if(s){ s=s.replace(/\/+$/,""); return /\/api\/sync$/.test(s)?s:s+"/api/sync"; }
   return /^https?:$/.test(location.protocol) ? "/api/sync" : "";
 }
-function configured(){ return !!(S.code && endpoint()); }
-// text/plain POST with the code in the body → a "simple" request, no CORS preflight
+function apiUrl(name){
+  var e=endpoint();
+  return e ? e.replace(/\/api\/sync$/, "/api/"+name) : "";
+}
+function tokenLive(){
+  return !!(S.idToken && S.sub && (+S.exp)*1000 > Date.now()+5000);
+}
+function configured(){
+  if(!endpoint()) return false;
+  if(tokenLive()) return true;
+  return !!S.code;
+}
+function account(){
+  var live=tokenLive();
+  return {
+    signedIn:live, expired:!!(S.idToken && S.sub && !live),
+    email:S.email, name:S.name, sub:S.sub||"",
+    hold:!!(S.hold && live), claimed:!!S.claimed, claimChecked:!!S.claimChecked
+  };
+}
+// text/plain POST → a "simple" request, no CORS preflight. A live Google token wins over the access code.
 function call(body){
+  var usingToken=tokenLive();
+  var cred=usingToken?{idToken:S.idToken}:{code:S.code};
   var opts={method:"POST", cache:"no-store", headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body:JSON.stringify(Object.assign({code:S.code}, body))};
+    body:JSON.stringify(Object.assign(cred, body))};
   return fetch(endpoint(), opts).then(function(r){
     return r.json().catch(function(){ return {}; }).then(function(j){
-      if(r.status===401){ var e=new Error("קוד הגישה שגוי"); e.auth=true; throw e; }
-      if(!r.ok || !j || j.ok!==true) throw new Error(j&&j.error==="not-configured"?"השרת לא מוגדר (חסר קוד גישה בשרת)":"שגיאת שרת ("+r.status+")");
+      if(r.ok && j && j.claim && j.claim.mine) S.claimed=true;
+      if(r.status===401){ var e=new Error(usingToken?"פג תוקף הכניסה. היכנס שוב עם Google":"קוד הגישה שגוי"); e.auth=true; throw e; }
+      if(r.status===409 && j && j.error==="claimed"){ var e2=new Error("ההיסטוריה שויכה לחשבון Google. היכנס עם Google כדי לסנכרן."); throw e2; }
+      if(!r.ok || !j || j.ok!==true){
+        var msg="שגיאת שרת ("+r.status+")";
+        if(j&&j.error==="not-configured") msg=usingToken?"השרת לא מוגדר (חסר מזהה Google)":"השרת לא מוגדר (חסר קוד גישה בשרת)";
+        else if(j&&j.error==="not-migrated") msg="השרת עדיין בלי טבלאות החשבונות. סנכרון עם קוד גישה ממשיך לעבוד.";
+        else if(j&&j.error==="auth-unavailable") msg="לא ניתן לאמת את הכניסה מול Google. נסה שוב.";
+        throw new Error(msg);
+      }
       return j;
     });
   }, function(){ throw new Error(navigator.onLine===false?"אין חיבור לאינטרנט":"השרת לא זמין"); });
@@ -184,6 +221,7 @@ function run(full){
 function sync(full){
   clearTimeout(timer);
   if(!configured()) return Promise.resolve(false);
+  if(S.hold && tokenLive()) return Promise.resolve(false);
   if(busy){ again=true; againFull=againFull||!!full; return Promise.resolve(false); }
   busy=true; save();
   return run(!!full).then(function(n){
@@ -203,6 +241,7 @@ function schedule(ms, full){ if(!configured()) return; clearTimeout(timer); time
 
 function status(){
   if(!configured()) return "none";
+  if(S.hold && tokenLive()) return "hold";
   if(S.lastErr) return "err";
   if(busy || Object.keys(S.dirty).length || !S.lastOk) return "wait";
   return "ok";
@@ -211,9 +250,15 @@ function resetLink(){ S.cursor=0; S.lastOk=0; S.meta={}; S.dirty={}; S.counts=nu
 function setConfig(code, server){
   code=String(code||"").trim(); server=String(server||"").trim();
   if(server && !/^https?:\/\/\S+$/.test(server)) return false;
-  if(code!==S.code || server!==S.server){ S.code=code; S.server=server; resetLink(); fails=0; }
+  if(code!==S.code || server!==S.server){
+    var serverChanged=server!==S.server;
+    S.code=code; S.server=server;
+    if(serverChanged || !tokenLive()) resetLink();
+    fails=0;
+  }
   save();
-  if(configured()) schedule(50);
+  if(configured() && !(S.hold && tokenLive())) schedule(50);
+  loadConfig();
   return true;
 }
 function test(){
@@ -222,17 +267,156 @@ function test(){
     function(e){ S.lastErr=e.message; S.authErr=!!e.auth; save(); throw e; });
 }
 
+function decodeJwtPayload(token){
+  try{
+    var p=String(token||"").split(".")[1]; if(!p) return null;
+    p=p.replace(/-/g,"+").replace(/_/g,"/"); while(p.length%4) p+="=";
+    var bytes=Uint8Array.from(atob(p), function(c){ return c.charCodeAt(0); });
+    var j=JSON.parse(new TextDecoder().decode(bytes));
+    return RT.isObj(j)?j:null;
+  }catch(e){ return null; }
+}
+function currentProfileId(){ return (S.sub && S.idToken) ? "g:"+S.sub : "local"; }
+function readProfiles(){ var p=RT.readJSON(PROFILES,{}); return RT.isObj(p)?p:{}; }
+function snapshotActive(){
+  var state=null, plan=null, syncs=null;
+  try{ state=localStorage.getItem(RT.KEYS.state); plan=localStorage.getItem(RT.KEYS.plan); syncs=localStorage.getItem(KEY); }catch(e){}
+  return {state:state, plan:plan, sync:syncs};
+}
+function restoreSnap(snap){
+  try{
+    if(!snap){
+      localStorage.setItem(RT.KEYS.state, JSON.stringify({__v:2, entries:{}, custom:{}, customEx:[]}));
+      localStorage.removeItem(RT.KEYS.plan);
+      localStorage.removeItem(KEY);
+      return;
+    }
+    if(snap.state!=null) localStorage.setItem(RT.KEYS.state, snap.state); else localStorage.removeItem(RT.KEYS.state);
+    if(snap.plan!=null) localStorage.setItem(RT.KEYS.plan, snap.plan); else localStorage.removeItem(RT.KEYS.plan);
+    if(snap.sync!=null) localStorage.setItem(KEY, snap.sync); else localStorage.removeItem(KEY);
+  }catch(e){}
+}
+function signIn(idToken){
+  var info=decodeJwtPayload(idToken);
+  var exp=info ? (+info.exp||0) : 0;
+  if(!info || typeof info.sub!=="string" || !info.sub || exp*1000<Date.now()){
+    if(RT.toast) RT.toast("הכניסה נכשלה");
+    return false;
+  }
+  if(S.sub===info.sub){
+    S.idToken=idToken; S.exp=exp;
+    if(typeof info.email==="string" && info.email) S.email=info.email;
+    if(typeof info.name==="string" && info.name) S.name=info.name;
+    save();
+    if(S.hold && !S.claimChecked) bootAccount();
+    else if(!S.hold) schedule(50);
+    return true;
+  }
+  var profiles=readProfiles();
+  profiles[currentProfileId()]=snapshotActive();
+  if(!RT.writeJSON(PROFILES, profiles)){ if(RT.toast) RT.toast("לא ניתן לשמור את ההחלפה בדפדפן"); return false; }
+  var server=S.server;
+  var next=profiles["g:"+info.sub];
+  if(next && next.sync){
+    restoreSnap(next);
+    var ns=RT.readJSON(KEY,{}); if(!RT.isObj(ns)) ns={};
+    ns.idToken=idToken; ns.exp=exp; ns.sub=info.sub;
+    ns.email=typeof info.email==="string"?info.email:(ns.email||"");
+    ns.name=typeof info.name==="string"?info.name:(ns.name||"");
+    if(server) ns.server=server;
+    RT.writeJSON(KEY, ns);
+  } else {
+    restoreSnap(null);
+    RT.writeJSON(KEY, {
+      code:"", server:server, cursor:0, lastOk:0, lastErr:"", authErr:false,
+      meta:{}, dirty:{}, counts:null, received:0,
+      idToken:idToken, exp:exp, sub:info.sub,
+      email:typeof info.email==="string"?info.email:"",
+      name:typeof info.name==="string"?info.name:"",
+      hold:true, claimed:false, claimChecked:false
+    });
+  }
+  location.reload();
+  return true;
+}
+function signOut(){
+  if(!S.sub) return false;
+  var profiles=readProfiles();
+  profiles[currentProfileId()]=snapshotActive();
+  var server=S.server;
+  var local=profiles.local||null;
+  if(!RT.writeJSON(PROFILES, profiles)){ if(RT.toast) RT.toast("לא ניתן לשמור את היציאה בדפדפן"); return false; }
+  restoreSnap(local);
+  var ns=RT.readJSON(KEY,{}); if(!RT.isObj(ns)) ns={};
+  ns.idToken=""; ns.sub=""; ns.email=""; ns.name=""; ns.exp=0; ns.hold=false;
+  if(!ns.server && server) ns.server=server;
+  RT.writeJSON(KEY, ns);
+  location.reload();
+  return true;
+}
+function claim(code){
+  code=String(code||"").trim();
+  if(!tokenLive()) return Promise.reject(new Error("צריך להיכנס עם Google"));
+  if(!code) return Promise.reject(new Error("הזן את קוד הגישה"));
+  if(!apiUrl("claim")) return Promise.reject(new Error("חסרה כתובת שרת"));
+  return fetch(apiUrl("claim"), {method:"POST", cache:"no-store", headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({idToken:S.idToken, code:code})}).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if(r.status===401){
+        var e=new Error(j&&j.error==="bad-code"?"קוד הגישה שגוי":"פג תוקף הכניסה. היכנס שוב עם Google");
+        e.auth=!(j&&j.error==="bad-code"); throw e;
+      }
+      if(r.status===409) throw new Error("ההיסטוריה כבר משויכת לחשבון אחר.");
+      if(!r.ok || !j || j.ok!==true) throw new Error(j&&j.error==="not-migrated"?"השרת עדיין בלי טבלאות החשבונות.":"השיוך נכשל");
+      S.hold=false; S.claimed=true; S.claimChecked=true; S.cursor=0; S.lastOk=0; S.meta={}; S.dirty={}; S.lastErr=""; S.authErr=false;
+      save();
+      return sync(true);
+    });
+  }, function(){ throw new Error(navigator.onLine===false?"אין חיבור לאינטרנט":"השרת לא זמין"); });
+}
+function skipClaim(){
+  if(!tokenLive()) return false;
+  S.hold=false; S.claimChecked=true; save(); schedule(50); return true;
+}
+function loadConfig(){
+  var url=apiUrl("config"); if(!url) return;
+  fetch(url, {cache:"no-store"}).then(function(r){ return r.json(); }).then(function(j){
+    var id=j&&typeof j.googleClientId==="string"?j.googleClientId:"";
+    if(id!==clientId){ clientId=id; notify(); }
+  }, function(){});
+}
+function bootAccount(){
+  if(!(tokenLive() && S.hold && !S.claimChecked && endpoint())) return false;
+  call({ping:true}).then(function(j){
+    var c=j.claim||{};
+    S.claimChecked=true;
+    if(c.mine) S.claimed=true;
+    if(c.mine || c.taken || (j.counts && j.counts.total>0)) S.hold=false;
+    save();
+    if(!S.hold) schedule(50);
+  }, function(err){
+    S.claimChecked=true;
+    S.lastErr=String(err&&err.message||err||"שגיאה");
+    S.authErr=!!(err&&err.auth);
+    save();
+  });
+  return true;
+}
+
 RT.sync = {
   entry:function(){}, session:function(){},                // picked up by the change scan
   del:function(subId,x){ if(!x||!x.date) return; S.meta["e:"+subId+"|"+x.date]=[null,Date.now(),1]; S.dirty["e:"+subId+"|"+x.date]=1; save(); schedule(1500); },
-  full:function(){ if(!configured()) return false; fails=0; sync(true); return true; },
+  full:function(){ if(!configured() || (S.hold && tokenLive())) return false; fails=0; sync(true); return true; },
   flush:function(){ fails=0; return sync(false); },
   test:test, status:status, setConfig:setConfig, configured:configured, endpoint:endpoint,
   state:function(){ return S; }, busy:function(){ return busy; }, pending:function(){ return Object.keys(S.dirty).length; },
-  onChange:function(f){ fns.push(f); }, onApplied:function(f){ appliedFns.push(f); }
+  onChange:function(f){ fns.push(f); }, onApplied:function(f){ appliedFns.push(f); },
+  account:account, clientId:function(){ return clientId; },
+  signIn:signIn, signOut:signOut, claim:claim, skipClaim:skipClaim
 };
 RT.onChange(function(){ if(applying) return; if(scan() && configured()) schedule(1500); });
 window.addEventListener("online",function(){ fails=0; if(configured()) sync(false); });
 document.addEventListener("visibilitychange",function(){ if(!document.hidden && configured() && !busy) sync(false); });
-if(configured()) schedule(300);                          // sync on load
+loadConfig();
+if(!bootAccount() && configured()) schedule(300);       // sync on load (a new Google account waits for the claim check)
 })();

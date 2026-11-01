@@ -382,13 +382,65 @@ function renderSettings(){
   $("migInfo").textContent = meta.fromV1 ? "הנתונים מגרסה 1 הועברו אוטומטית ב-"+RT.fmtDate(meta.at,true)+". עותק מלא של נתוני גרסה 1 נשמר בדפדפן כגיבוי." : "";
   renderEditor(); renderWeeklyEditor();
 }
+var gsiMountedFor="";
+function mountGsi(clientId){
+  if(gsiMountedFor===clientId) return;
+  gsiMountedFor=clientId;
+  function render(){
+    if(!window.google||!google.accounts||!google.accounts.id) return;
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: function(resp){ if(resp&&resp.credential) RT.sync.signIn(resp.credential); },
+      auto_select: false,
+      cancel_on_tap_outside: true,
+      itp_support: true
+    });
+    var el=$("googleBtn"); if(!el) return;
+    el.innerHTML="";
+    google.accounts.id.renderButton(el, {theme:"outline", size:"large", shape:"pill", text:"signin_with", locale:"he", width:240});
+  }
+  if(window.google&&google.accounts&&google.accounts.id){ render(); return; }
+  if(document.getElementById("gsiScript")) return;
+  var s=document.createElement("script");
+  s.id="gsiScript"; s.src="https://accounts.google.com/gsi/client?hl=he"; s.async=true;
+  s.onload=render;
+  s.onerror=function(){ var h=$("googleHint"); if(h){ h.hidden=false; h.textContent="כפתור Google לא נטען. בדוק את החיבור ונסה לרענן."; } };
+  document.head.appendChild(s);
+}
+function renderAccount(){
+  var slot=$("googleSlot"); if(!slot||!RT.sync||!RT.sync.account) return;
+  var id=RT.sync.clientId(), a=RT.sync.account();
+  slot.hidden=!id;
+  var showWho=a.signedIn||a.expired;
+  $("googleSigned").hidden=!showWho;
+  $("googleBtn").hidden=!!a.signedIn;
+  $("googleWho").textContent=showWho?("מחובר: "+(a.email||a.name||"חשבון Google")):"";
+  $("googleHint").hidden=!!a.signedIn;
+  $("googleHint").textContent=a.expired?"פג תוקף הכניסה. היכנס שוב עם Google.":"כל חשבון Google רואה רק את התרגולים שלו. בלי כניסה הנתונים נשארים במכשיר.";
+  var opened=$("claimBox").dataset.open==="1";
+  var pending=a.signedIn&&a.hold&&!a.claimChecked;
+  var showClaim=a.signedIn&&!a.claimed&&a.claimChecked&&(a.hold||opened);
+  $("claimPending").hidden=!pending;
+  $("claimBox").hidden=!showClaim;
+  $("claimLink").hidden=!(a.signedIn&&!a.claimed&&a.claimChecked&&!showClaim);
+  $("claimedNote").hidden=!(a.signedIn&&a.claimed);
+  $("legacyCode").hidden=!!(a.signedIn||a.expired);
+  if(id&&!a.signedIn) mountGsi(id);
+}
 function renderSync(){
-  var S=RT.sync.state(), st=RT.sync.status(), LBL={none:"לא מוגדר",ok:"מסונכרן",wait:"ממתין",err:"שגיאה"};
-  document.querySelectorAll("[data-sync-dot]").forEach(function(d){ d.className="sync-dot "+(st==="none"?"":st); d.title="סנכרון: "+LBL[st]; });
+  renderAccount();
+  var S=RT.sync.state(), st=RT.sync.status(), LBL={none:"לא מוגדר",ok:"מסונכרן",wait:"ממתין",err:"שגיאה",hold:"ממתין לשיוך"};
+  document.querySelectorAll("[data-sync-dot]").forEach(function(d){ d.className="sync-dot "+(st==="none"||st==="hold"?"":st); d.title="סנכרון: "+(LBL[st]||st); });
   var box=$("syncStatus"); if(!box) return;
   var h='סטטוס: <b data-st="'+st+'">'+LBL[st]+'</b>', n=RT.sync.pending();
-  if(st==="none") h+=' · הזן קוד גישה'+($("syncServerFld").hidden?'':' וכתובת שרת')+' ולחץ „שמור”';
-  else {
+  if(st==="none"){
+    var a=RT.sync.account();
+    if(a.expired) h+=' · פג תוקף הכניסה. היכנס שוב עם Google';
+    else h+=' · הזן קוד גישה'+($("syncServerFld").hidden?'':' וכתובת שרת')+' ולחץ „שמור”';
+  } else if(st==="hold"){
+    h+=' · אפשר לשייך היסטוריה קיימת, או להמשיך עם חשבון ריק';
+    if(S.lastErr) h+='<br><span class="bad">'+esc(S.lastErr)+'</span>';
+  } else {
     if(RT.sync.busy()) h+=' · מסנכרן…';
     else if(n) h+=' · <span data-sync-pending>'+n+'</span> שינויים ממתינים';
     if(S.lastOk) h+='<br>סונכרן לאחרונה: <span data-sync-last>'+RT.fmtDate(S.lastOk,true)+'</span>';
@@ -408,20 +460,36 @@ function saveSync(){
 function syncDirty(){ var S=RT.sync.state(); return $("syncCode").value.trim()!==S.code || $("syncServer").value.trim()!==S.server; }
 $("syncSave").addEventListener("click",function(){
   if(!saveSync()) return;
-  RT.toast(RT.sync.configured()?"נשמר – הסנכרון מתחיל":(RT.sync.state().code?"חסרה כתובת שרת":"הסנכרון כבוי"));
+  var a=RT.sync.account();
+  RT.toast(RT.sync.configured()?(a.hold?"נשמר":"נשמר – הסנכרון מתחיל"):(RT.sync.state().code?"חסרה כתובת שרת":"הסנכרון כבוי"));
 });
 ["syncCode","syncServer"].forEach(function(id){ $(id).addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); $("syncSave").click(); } }); });
 $("syncTest").addEventListener("click",function(){
   if(syncDirty() && !saveSync()) return;
-  if(!RT.sync.configured()){ RT.toast("קודם הזן קוד גישה"); return; }
+  if(!RT.sync.configured()){ RT.toast(RT.sync.account().signedIn?"חסרה כתובת שרת":"קודם הזן קוד גישה"); return; }
   $("syncStatus").innerHTML='סטטוס: <b>בודק חיבור…</b>';
   RT.sync.test().then(function(j){ RT.toast("החיבור תקין ✓ · "+((j.counts&&j.counts.total)||0)+" רשומות בענן"); },
     function(e){ RT.toast("החיבור נכשל ✗ "+(e&&e.message||"")); });
 });
 $("syncNow").addEventListener("click",function(){
   if(syncDirty() && !saveSync()) return;
-  if(!RT.sync.full()) RT.toast("קודם הזן קוד גישה");
+  if(RT.sync.account().hold){ RT.toast("קודם לשייך את ההיסטוריה, או להמשיך בלי שיוך"); return; }
+  if(!RT.sync.full()) RT.toast(RT.sync.account().signedIn?"חסרה כתובת שרת":"קודם הזן קוד גישה");
 });
+$("googleOut").addEventListener("click",function(){ RT.sync.signOut(); });
+$("claimBtn").addEventListener("click",function(){
+  var btn=$("claimBtn"); btn.disabled=true;
+  RT.sync.claim($("claimCode").value).then(function(){
+    btn.disabled=false; $("claimBox").dataset.open="";
+    RT.toast("ההיסטוריה שויכה לחשבון הזה"); renderAccount();
+  }, function(e){ btn.disabled=false; RT.toast(e&&e.message||"השיוך נכשל"); renderAccount(); });
+});
+$("claimSkip").addEventListener("click",function(){
+  RT.sync.skipClaim(); $("claimBox").dataset.open="";
+  RT.toast("החשבון מתחיל בלי היסטוריה קודמת"); renderAccount();
+});
+$("claimLink").addEventListener("click",function(){ $("claimBox").dataset.open="1"; renderAccount(); $("claimCode").focus(); });
+$("claimCode").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); $("claimBtn").click(); } });
 $("syncExport").addEventListener("click",function(){ $("exportBtn").click(); });
 function bindNum(id,key,min,max){
   $(id).addEventListener("change",function(){ var v=parseInt($(id).value,10); if(!isFinite(v)) v=RT.DEFAULT_SETTINGS[key]; v=Math.max(min,Math.min(max,v)); $(id).value=v; RT.settings[key]=v; RT.saveSettings(); if(key.indexOf("measure")===0 && !RT.measure.active()) RT.measure.setupFor(M.sub); });
@@ -623,7 +691,7 @@ window.__rt = {
   M:function(){ return {phase:M.phase,bpm:M.bpm,start:M.start,hard:M.hard,brk:M.brk,sub:M.sub,queue:M.queue,qi:M.qi}; },
   metro:function(){ return {bpm:RT.metro.bpm,running:RT.metro.running,sub:RT.metro.sub,gap:Object.assign({},RT.metro.gap),log:RT.metro.log.slice()}; },
   settings:function(){ return JSON.parse(JSON.stringify(RT.settings)); },
-  sync:function(){ var S=RT.sync.state(); return JSON.parse(JSON.stringify({cursor:S.cursor,lastOk:S.lastOk,lastErr:S.lastErr,pending:RT.sync.pending(),counts:S.counts,received:S.received,status:RT.sync.status(),busy:RT.sync.busy()})); },
+  sync:function(){ var S=RT.sync.state(), a=RT.sync.account(); return JSON.parse(JSON.stringify({cursor:S.cursor,lastOk:S.lastOk,lastErr:S.lastErr,pending:RT.sync.pending(),counts:S.counts,received:S.received,status:RT.sync.status(),busy:RT.sync.busy(),sub:a.sub,hold:a.hold,claimed:a.claimed})); },
   syncFlush:function(){ return RT.sync.flush(); },
   ui:function(){ return JSON.parse(JSON.stringify(RT.ui)); },
   rec:function(){ return RT.recorder.state(); },
