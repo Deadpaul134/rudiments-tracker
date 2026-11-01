@@ -15,25 +15,26 @@ test.describe('practice routine: auto-advance + rating logging', () => {
   test('count-in → step → rest with rating → next step starts automatically', async ({ page }) => {
     await open(page, 'home');
     await page.click('#startToday');
-    await expect(page).toHaveURL(/#practice$/);
+    await expect(page).toHaveURL(/#home$/);
     expect((await P(page)).phase).toBe('countin');
     expect(await rt(page, () => window.__rt.metro().running)).toBe(true);
 
     await page.clock.fastForward(countIn(120));
     expect((await P(page)).phase).toBe('play');
-    await expect(page.locator('#stage [data-p="name"]')).toHaveText('חימום – סינגל סטרוק');
-    await expect(page.locator('#stageBpm')).toHaveText('120');
+    await expect(page.locator('#homeStage [data-p="name"]')).toHaveText('חימום – סינגל סטרוק');
+    await expect(page.locator('#homeBpm')).toHaveText('120');
 
     await page.clock.fastForward(3 * 60000);
     let p = await P(page);
     expect(p.phase).toBe('rest');
     expect(p.restIdx).toBe(0);
-    await expect(page.locator('#restPanel')).toBeVisible();
+    await expect(page.locator('#homeAsk')).toBeVisible();
+    await expect(page.locator('#homeRates')).toHaveClass(/live/);
     expect(await rt(page, () => window.__rt.metro().log.some(e => e.ev === 'chime' && e.kind === 'end'))).toBe(true);
-    // the rest panel previews the next step
-    await expect(page.locator('#restPanel [data-p="nextname"]')).toHaveText('פלאם יד שמאל');
+    // the home card previews the next step
+    await expect(page.locator('#homeNext [data-p="nextname"]')).toHaveText('פלאם יד שמאל');
 
-    await page.click('#restPanel [data-rate="clean"]');
+    await page.click('#homeRates [data-rate="clean"]');
     let st = await rt(page, () => window.__rt.state());
     const w = st.entries.single8.filter(x => x.kind === 'work');
     expect(w).toHaveLength(1);
@@ -42,7 +43,7 @@ test.describe('practice routine: auto-advance + rating logging', () => {
     expect(st.entries.single8.filter(x => x.kind !== 'work').map(x => x.clean)).toEqual([225]);
 
     // changing the rating during the rest updates the same entry
-    await page.click('#restPanel [data-rate="ok"]');
+    await page.click('#homeRates [data-rate="ok"]');
     st = await rt(page, () => window.__rt.state());
     expect(st.entries.single8.filter(x => x.kind === 'work').map(x => x.rating)).toEqual(['ok']);
 

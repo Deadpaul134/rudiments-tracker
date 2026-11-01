@@ -211,6 +211,7 @@ function render(){
   var stage=document.getElementById("stage"); if(!stage) return;
   stage.dataset.phase=P.phase; stage.classList.toggle("paused",P.paused);
   var fo=document.getElementById("focus"); if(fo){ fo.dataset.phase=P.phase; fo.classList.toggle("paused",P.paused); }
+  var home=document.getElementById("homeStage"); if(home){ home.dataset.phase=P.phase; home.classList.toggle("paused",P.paused); }
   setP("stepn", P.phase==="done" ? "סיום" : "שלב "+(t+1)+"/"+steps.length);
   setP("name", P.phase==="done" ? "כל הכבוד!" : s.title);
   setP("desc", P.phase==="done" ? "" : s.desc);
@@ -221,6 +222,12 @@ function render(){
   var rest=P.phase==="rest";
   document.getElementById("restPanel").hidden=!rest;
   document.querySelectorAll('#focus [data-show="rest"]').forEach(function(n){ n.hidden=!rest; });
+  var ask=document.getElementById("homeAsk"), nxt=document.getElementById("homeNext");
+  if(ask) ask.hidden=!rest;
+  if(nxt) nxt.hidden=!rest;
+  var rates=document.getElementById("homeRates"); if(rates) rates.classList.toggle("live",rest);
+  var startBtn=document.getElementById("startToday"), lab=startBtn&&startBtn.querySelector(".lbl");
+  if(lab) lab.textContent = P.phase==="idle" ? "התחל" : P.phase==="done" ? "התחל שוב" : (P.paused ? "המשך" : "השהה");
   if(rest){
     var done=steps[P.restIdx], nx=steps[P.restIdx+1], r=(P.results[P.restIdx]||{}).rating;
     setP("restname", done.title);
