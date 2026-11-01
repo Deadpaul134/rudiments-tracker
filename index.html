@@ -42,56 +42,42 @@
 
 <!-- ================= בית ================= -->
 <section class="screen" id="screen-home" data-screen="home" aria-labelledby="homeTitle">
-  <header class="hello">
-    <div>
-      <h1 id="homeTitle">שלום <span aria-hidden="true">👋</span></h1>
-      <p class="lead">מוכנים לתרגול של היום?</p>
-      <p class="pill-line"><i class="dot"></i><span id="homePlanLine"></span></p>
-    </div>
-  </header>
+  <h1 class="sr" id="homeTitle">תרגול</h1>
+  <div class="stats thin" id="homeStats">
+    <div class="stat"><div class="stat-v" id="stStreak">0</div><div class="stat-l">ימי רצף</div></div>
+    <div class="stat"><div class="stat-v" id="stWeek">0/7</div><div class="stat-l">ימי תרגול השבוע</div></div>
+    <div class="stat" id="stGoal"><div class="stat-v" id="stLeft">—</div><div class="stat-l">ימים ליעד 30.10</div></div>
+  </div>
   <div class="note warn" id="fixBar" hidden>
     <span class="fx-t" id="fixText"></span>
     <span class="fx-a"><button type="button" class="btn primary sm" id="fixApply">תקן עכשיו</button><button type="button" class="btn sm" id="fixLater">לא עכשיו</button></span>
   </div>
-  <div class="home-grid">
-    <div class="col">
-      <div class="card hero">
-        <div class="ring-wrap">
-          <svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="52"/><circle class="prog" id="homeRing" cx="60" cy="60" r="52"/></svg>
-          <div class="ring-c"><div class="ring-n" id="homeRingN">0/5</div><div class="ring-l">שלבים היום</div></div>
-        </div>
-        <div class="hero-side">
-          <button type="button" class="btn primary xl" id="startToday"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>התחל תרגול של היום</button>
-          <div class="hero-sub" id="heroSub"></div>
-        </div>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="stat-v" id="stStreak">0</div><div class="stat-l">ימי רצף <span aria-hidden="true">🔥</span></div></div>
-        <div class="stat"><div class="stat-v" id="stWeek">0/7</div><div class="stat-l">ימי תרגול השבוע</div></div>
-        <div class="stat"><div class="stat-v" id="stLeft">—</div><div class="stat-l">ימים ליעד 30.10</div></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h2><i class="dot"></i>התוכנית של היום</h2><span class="muted" id="planMeta"></span></div>
-        <ol class="plan-list" id="todayPlan"></ol>
-      </div>
+  <div class="card stage home-stage" id="homeStage" data-phase="idle">
+    <div class="stage-top">
+      <span class="pill" data-p="stepn"></span>
+      <span class="phase" data-p="phase"></span>
+      <span class="today-n"><b id="homeRingN">0/5</b> היום</span>
     </div>
-    <div class="col">
-      <div class="card">
-        <div class="card-h"><h2><i class="dot"></i>השבוע</h2>
-          <div class="wk-nav"><button type="button" class="ib" id="wkPrev" aria-label="השבוע הקודם">›</button><span id="wkRange"></span><button type="button" class="ib" id="wkNext" aria-label="השבוע הבא">‹</button></div>
-        </div>
-        <div class="week" id="week" role="group" aria-label="ימי תרגול בשבוע"></div>
-        <div class="muted small" id="wkFoot"></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h2><i class="dot"></i>יעדים עד 30.10</h2><a href="#progress" class="link">לכל ההתקדמות</a></div>
-        <div class="goals-mini" id="homeGoals"></div>
-      </div>
-      <div class="card measure-cta" id="homeMeasure">
-        <div class="card-h"><h2><i class="dot"></i>מדידה שבועית</h2><span class="tag" id="measureTag"></span></div>
-        <p class="muted" id="measureText"></p>
-        <a href="#measure" class="btn">למדידה השבועית</a>
-      </div>
+    <h2 class="stage-name" data-p="name"></h2>
+    <div class="stage-stick" data-p="stick"></div>
+    <div class="bpm-row">
+      <button type="button" class="bpm-adj" data-adj="-5" aria-label="הורד 5 BPM">−5</button>
+      <button type="button" class="bpm-adj" data-adj="-1" aria-label="הורד BPM">−1</button>
+      <div class="bpm"><div class="bpm-n" data-p="bpm" id="homeBpm">0</div><div class="bpm-u">BPM</div></div>
+      <button type="button" class="bpm-adj" data-adj="1" aria-label="הוסף BPM">+1</button>
+      <button type="button" class="bpm-adj" data-adj="5" aria-label="הוסף 5 BPM">+5</button>
+    </div>
+    <div class="beats" data-beats></div>
+    <div class="tline"><div class="tline-bar"><i data-p="bar"></i></div><div class="tline-t"><span data-p="left"></span><span class="muted" data-p="total"></span></div></div>
+    <button type="button" class="btn primary xl" id="startToday"><svg viewBox="0 0 24 24" fill="currentColor" data-p="playicon"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg><span class="lbl">התחל</span></button>
+    <div class="home-ask" id="homeAsk" hidden>איך היה <b data-p="restname"></b>?</div>
+    <div class="raise" data-raise-box hidden><span data-p="raisetxt"></span><span class="raise-a"><button type="button" class="btn primary sm" data-raise="accept" data-p="raiseto"></button></span></div>
+    <div class="rest-next" id="homeNext" hidden><span class="muted">הבא בעוד <b data-p="restleft"></b>:</span> <b data-p="nextname"></b></div>
+    <div class="rate-row quad" id="homeRates">
+      <button type="button" class="rate r-clean" data-rate="clean"><b>נקי</b><small>1</small></button>
+      <button type="button" class="rate r-ok" data-rate="ok"><b>סביר</b><small>2</small></button>
+      <button type="button" class="rate r-broke" data-rate="broke"><b>נשבר</b><small>3</small></button>
+      <button type="button" class="rate r-later" data-raise="dismiss"><b>לא עכשיו</b></button>
     </div>
   </div>
 </section>
@@ -157,9 +143,9 @@
       </div>
     </div>
     <div class="card">
-      <div class="card-h"><h2><i class="dot"></i>שלבי השגרה</h2><span class="muted" id="routineMeta"></span></div>
+      <div class="card-h"><h2><i class="dot"></i>שלבי השגרה</h2><span class="card-h-end"><button type="button" class="info-btn" aria-expanded="false" aria-controls="helpSteps" aria-label="הסבר על שלבי השגרה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><path d="M12 8h.01" stroke-width="3" stroke-linecap="round"/></svg></button><span class="muted" id="routineMeta"></span></span></div>
       <ol class="steps" id="pSteps"></ol>
-      <p class="muted small">לחיצה על שלב בוחרת ממנו להתחיל. הקצבים נקבעים רק על ידך – בחצים או בעורך השגרה בהגדרות.</p>
+      <p class="info-pop muted small" id="helpSteps" hidden>לחיצה על שלב בוחרת ממנו להתחיל. הקצבים נקבעים רק על ידך – בחצים או בעורך השגרה בהגדרות.</p>
     </div>
   </div>
 </section>
@@ -187,7 +173,8 @@
           <button type="button" class="btn lg" id="mSkip" hidden>דלג לתרגיל הבא</button>
           <button type="button" class="btn lg ghost" id="mQuit" hidden>סיים רשימה</button>
         </div>
-        <p class="muted small">ברירת המחדל: המקסימום הנקי האחרון פחות 20. הטמפו עולה אוטומטית; לוחצים פעם אחת כשנהיה <b>קשה</b> ופעם שנייה כשזה <b>נשבר</b>.</p>
+        <div class="info-line"><button type="button" class="info-btn" aria-expanded="false" aria-controls="helpTempo" aria-label="הסבר על טמפו ברירת המחדל"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><path d="M12 8h.01" stroke-width="3" stroke-linecap="round"/></svg></button></div>
+        <p class="info-pop muted small" id="helpTempo" hidden>ברירת המחדל: המקסימום הנקי האחרון פחות 20. הטמפו עולה אוטומטית; לוחצים פעם אחת כשנהיה <b>קשה</b> ופעם שנייה כשזה <b>נשבר</b>.</p>
       </div>
       <div class="m-run" id="mRun" hidden>
         <div class="stage-top"><span class="pill" id="mRunPill"></span><span class="phase" id="mPhase"></span></div>
@@ -233,6 +220,13 @@
     <h1 id="progressTitle">התקדמות</h1>
     <button type="button" class="btn" id="copySummary">העתק סיכום למאסטרו</button>
   </header>
+  <div class="card">
+    <div class="card-h"><h2><i class="dot"></i>השבוע</h2>
+      <div class="wk-nav"><button type="button" class="ib" id="wkPrev" aria-label="השבוע הקודם">›</button><span id="wkRange"></span><button type="button" class="ib" id="wkNext" aria-label="השבוע הבא">‹</button></div>
+    </div>
+    <div class="week" id="week" role="group" aria-label="ימי תרגול בשבוע"></div>
+    <div class="muted small" id="wkFoot"></div>
+  </div>
   <div class="goals" id="goals"></div>
   <div class="prog-grid">
     <div class="card">
@@ -281,7 +275,7 @@
         </div>
       </div>
       <div class="card" id="syncCard">
-        <div class="card-h"><h2><i class="sync-dot" data-sync-dot></i>סנכרון בין מכשירים</h2></div>
+        <div class="card-h"><h2><i class="sync-dot" data-sync-dot></i>חשבון וגיבוי</h2><button type="button" class="info-btn" aria-expanded="false" aria-controls="helpSync" aria-label="הסבר על הסנכרון"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><path d="M12 8h.01" stroke-width="3" stroke-linecap="round"/></svg></button></div>
         <div class="account" id="googleSlot" hidden>
           <div id="googleSigned" hidden>
             <div class="account-row">
@@ -314,21 +308,20 @@
           <button type="button" class="btn primary" id="syncNow">סנכרן עכשיו</button>
           <button type="button" class="btn" id="syncExport">ייצוא לקובץ</button>
         </div>
-        <p class="muted small">הסנכרון רץ לבד בפתיחה ואחרי כל רשומה. בלי אינטרנט השינויים נשמרים במכשיר ונשלחים כשהחיבור חוזר. מחיקה של רשומה מוחקת אותה בכל המכשירים. המקסימום הנקי אף פעם לא יורד בגלל סנכרון.</p>
-      </div>
-      <div class="card">
-        <div class="card-h"><h2><i class="dot"></i>ייבוא וייצוא</h2></div>
+        <p class="info-pop muted small" id="helpSync" hidden>הסנכרון רץ לבד בפתיחה ואחרי כל רשומה. בלי אינטרנט השינויים נשמרים במכשיר ונשלחים כשהחיבור חוזר. מחיקה של רשומה מוחקת אותה בכל המכשירים. המקסימום הנקי אף פעם לא יורד בגלל סנכרון.</p>
+        <h3 class="h3">ייבוא וייצוא</h3>
         <div class="row gap wrap">
           <button type="button" class="btn" id="exportBtn">ייצוא נתונים</button>
           <button type="button" class="btn" id="importBtn">ייבוא קובץ</button>
           <button type="button" class="btn" id="copySummary2">העתק סיכום</button>
+          <button type="button" class="info-btn" aria-expanded="false" aria-controls="helpImport" aria-label="הסבר על ייבוא וייצוא"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><path d="M12 8h.01" stroke-width="3" stroke-linecap="round"/></svg></button>
           <input type="file" id="importFile" accept=".json,application/json" class="sr">
         </div>
-        <p class="muted small">מקבל קבצי ייצוא מגרסה 1 ומגרסה 2. הנתונים נשמרים בדפדפן הזה – מומלץ לייצא מדי פעם לגיבוי.</p>
+        <p class="info-pop muted small" id="helpImport" hidden>מקבל קבצי ייצוא מגרסה 1 ומגרסה 2. הנתונים נשמרים בדפדפן הזה – מומלץ לייצא מדי פעם לגיבוי.</p>
         <p class="muted small" id="migInfo"></p>
       </div>
       <div class="card" id="metroCard">
-        <div class="card-h"><h2><i class="dot"></i>מטרונום</h2></div>
+        <div class="card-h"><h2><i class="dot"></i>צליל ותזמון</h2><button type="button" class="info-btn" aria-expanded="false" aria-controls="helpLoud" aria-label="הסבר על מצב חזק לאוזניות"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5" stroke-linecap="round"/><path d="M12 8h.01" stroke-width="3" stroke-linecap="round"/></svg></button></div>
         <div class="fld"><span>צליל</span>
           <div class="seg" id="metroSoundSeg" role="radiogroup" aria-label="צליל המטרונום">
             <button type="button" data-sound="click" role="radio">קליק</button><button type="button" data-sound="cowbell" role="radio">קאובל</button><button type="button" data-sound="woodblock" role="radio">בלוק עץ</button><button type="button" data-sound="beep" role="radio">ביפ</button>
@@ -336,12 +329,9 @@
         </div>
         <label class="fld"><span>עוצמה: <b id="setVolVal" class="num"></b></span><input type="range" class="vol" id="setVol" min="0" max="100" step="1" aria-label="עוצמת המטרונום"></label>
         <label class="sw"><input type="checkbox" id="setLoud"><span class="knob" aria-hidden="true"></span>מצב חזק – מערכת תופים</label>
-        <p class="muted small">למערכת תופים עם אוזניות: צליל חד ובולט יותר וחזק בהרבה, עם הגבלה שמונעת עיוות.</p>
+        <p class="info-pop muted small" id="helpLoud" hidden>למערכת תופים עם אוזניות: צליל חד ובולט יותר וחזק בהרבה, עם הגבלה שמונעת עיוות.</p>
         <label class="sw"><input type="checkbox" id="setSubClicks"><span class="knob" aria-hidden="true"></span>השמע קליקים של החלוקה (שמיניות / טריולות / שש-עשריות)</label>
         <div class="row gap"><button type="button" class="btn" id="metroPreview">השמע דוגמה</button></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h2><i class="dot"></i>תרגול ומדידה</h2></div>
         <div class="fld-row">
           <label class="fld"><span>מנוחה בין שלבים (שניות)</span><input type="number" class="tin num" id="setRest" min="3" max="120"></label>
           <label class="fld"><span>מדידה: התחלה מתחת למקס</span><input type="number" class="tin num" id="setMStart" min="0" max="100"></label>

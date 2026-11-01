@@ -55,38 +55,28 @@ window.addEventListener("hashchange",go);
 RT.go=function(r){ if(location.hash==="#"+r) go(); else location.hash=r; };
 
 /* ======================= home ======================= */
-var wkOffset=0;
+var wkOffset=0, homePosed=false;
 function renderHome(){
+  if(!homePosed){
+    homePosed=true;
+    if(P.phase==="idle"){
+      var openSteps=RT.routine(), openDone=RT.plan.steps[RT.ymd(new Date())]||[];
+      if(openDone.length<openSteps.length){
+        for(var si=0;si<openSteps.length;si++){ if(openDone.indexOf(si)<0){ P.idx=si; break; } }
+      }
+    }
+  }
   var steps=RT.routine(), key=RT.ymd(new Date()), done=Array.isArray(RT.plan.steps[key])?RT.plan.steps[key]:[];
   var nd=done.filter(function(i){ return steps[i]; }).length;
-  $("homePlanLine").textContent="היום: "+RT.routineMinutes()+" דקות מתוכננות · "+steps.length+" שלבים";
   $("homeRingN").textContent=nd+"/"+steps.length;
-  var C=2*Math.PI*52, ring=$("homeRing"); ring.style.strokeDasharray=C.toFixed(1); ring.style.strokeDashoffset=(C*(1-(steps.length?nd/steps.length:0))).toFixed(1);
-  $("heroSub").textContent = RT.practice.active() ? "יש שגרה פעילה – לחץ כדי לחזור אליה" : nd>=steps.length ? "השגרה של היום הושלמה ✓ אפשר לתרגל שוב" : "ספירה של 4, מטרונום וטיימר לכל שלב, ומעבר אוטומטי לשלב הבא";
-  $("startToday").lastChild.textContent = RT.practice.active() ? "חזרה לתרגול" : "התחל תרגול של היום";
   $("stStreak").textContent=RT.streak();
   $("stWeek").textContent=RT.weekCount()+"/7";
   var left=Math.round((RT.GOAL_DATE-RT.dayStart(new Date()))/864e5);
-  $("stLeft").textContent=left>=0?left:"—";
-  $("planMeta").textContent=nd+"/"+steps.length+" הושלמו";
-  var ol=$("todayPlan"); ol.innerHTML="";
-  steps.forEach(function(s,i){
-    var on=done.indexOf(i)>=0, link=RT.stepLink(i), lw=link&&RT.latestWork(link);
-    var li=el("li",{"class":on?"done":""});
-    li.innerHTML='<span class="tick">'+CHECK+'</span><span class="pl-t"><b>'+esc(s.title)+'</b><small class="muted">'+s.min+" דק' · "+RT.subName(s.sub)+(lw?" · עבודה אחרונה "+lw.work+(lw.rating?" ("+RT.RATINGS[lw.rating]+")":""):"")+'</small></span><span class="pl-bpm">'+s.bpm+'<small>BPM</small></span>';
-    ol.appendChild(li);
-  });
-  renderWeek();
-  $("homeGoals").innerHTML=RT.GOALS.map(function(g){
-    var pr=RT.goalProgress(g);
-    return '<div class="gm'+(pr.done?" done":"")+'"><div class="gm-h"><b>'+esc(g.name)+'</b><span>'+(pr.cur!=null?pr.cur:"—")+' / '+g.target+'</span></div><div class="bar"><i style="width:'+pr.pct+'%"></i></div></div>';
-  }).join("");
-  var today=RT.dayStart(new Date()), dow=today.getDay(), ws=RT.weekStart(today);
-  var list=RT.plan.weekly.filter(function(x){ return RT.SUB[x]; }), measured=list.filter(function(id){ var lc=RT.latestClean(id); return lc && new Date(lc.date)>=ws; }).length;
-  $("measureTag").textContent = dow===0 ? "היום" : "יום ראשון "+RT.dm(RT.addDays(today,7-dow));
-  $("measureTag").classList.toggle("hot",dow===0);
-  $("measureText").textContent = measured+"/"+list.length+" נמדדו השבוע. הטמפו עולה אוטומטית ואתה רק מסמן מתי נהיה קשה ומתי נשבר.";
+  var goal=$("stGoal");
+  if(left<0) goal.hidden=true;
+  else { goal.hidden=false; $("stLeft").textContent=String(left); }
   renderFix();
+  RT.practice.render();
 }
 function renderWeek(){
   var box=$("week"), today=RT.dayStart(new Date()), ws=RT.addDays(RT.weekStart(today),7*wkOffset), cnt=0;
@@ -98,7 +88,7 @@ function renderWeek(){
       var b=el("button",{"type":"button","class":"day"+(on?" on":"")+(+d===+today?" today":"")+(d.getDay()===0?" sun":""),"data-date":k,"aria-pressed":String(on),"aria-label":"יום "+DAY_LETTERS[d.getDay()]+" "+RT.dm(d)+(on?" – תורגל":"")});
       if(fut) b.disabled=true;
       b.innerHTML='<span class="dn">'+DAY_LETTERS[d.getDay()]+'</span><span class="dd">'+RT.dm(d)+'</span><span class="dc">'+CHECK+'</span>';
-      b.addEventListener("click",function(){ if(RT.plan.days[k]) delete RT.plan.days[k]; else RT.plan.days[k]=1; RT.savePlan(); renderHome(); });
+      b.addEventListener("click",function(){ if(RT.plan.days[k]) delete RT.plan.days[k]; else RT.plan.days[k]=1; RT.savePlan(); renderWeek(); if(route==="home") renderHome(); });
       box.appendChild(b);
     })(RT.addDays(ws,i));
   }
@@ -109,11 +99,11 @@ function renderWeek(){
 $("wkPrev").addEventListener("click",function(){ wkOffset--; renderWeek(); });
 $("wkNext").addEventListener("click",function(){ if(wkOffset<0){ wkOffset++; renderWeek(); } });
 $("startToday").addEventListener("click",function(){
-  if(!RT.practice.active()){
-    var steps=RT.routine(), done=RT.plan.steps[RT.ymd(new Date())]||[], first=0;
-    for(var i=0;i<steps.length;i++){ if(done.indexOf(i)<0){ first=i; break; } }
-    RT.go("practice"); RT.practice.start(done.length>=steps.length?0:first);
-  } else RT.go("practice");
+  if(RT.practice.active()){ RT.practice.togglePause(); return; }
+  if(P.phase==="done"){ RT.practice.togglePause(); return; }
+  var steps=RT.routine(), done=RT.plan.steps[RT.ymd(new Date())]||[], first=0;
+  for(var i=0;i<steps.length;i++){ if(done.indexOf(i)<0){ first=i; break; } }
+  RT.practice.start(done.length>=steps.length?0:first);
 });
 function renderFix(){
   var bar=$("fixBar"), f=RT.fixPlan(), u=RT.ui.fix1710;
@@ -133,6 +123,7 @@ function cssVar(n){ return getComputedStyle(document.documentElement).getPropert
 var pg={ex:null, sub:null};
 function measuredSubs(){ return RT.allSubIds().filter(function(id){ return RT.entries(id).length; }); }
 function renderProgress(){
+  renderWeek();
   $("goals").innerHTML=RT.GOALS.map(function(g){
     var pr=RT.goalProgress(g);
     var foot = pr.cur==null ? '<span>עדיין אין מדידה</span><span>חסרים <b>'+(g.target-g.base)+'</b> BPM</span>'
@@ -372,7 +363,7 @@ function renderSettings(){
   applyTheme();
   var S=RT.sync.state();
   $("syncCode").value=S.code; $("syncServer").value=S.server;
-  $("syncServerFld").hidden = /^https?:$/.test(location.protocol) && !S.server;
+  $("syncServerFld").hidden = location.protocol!=="file:";
   renderSync();
   $("setRest").value=RT.settings.restSec; $("setMStart").value=RT.settings.measureStart;
   $("setMStep").value=RT.settings.measureStep; $("setMEvery").value=RT.settings.measureEvery;
@@ -656,7 +647,7 @@ document.addEventListener("keydown",function(e){
   if(tag==="input"||tag==="textarea"||tag==="select"||e.target.isContentEditable) return;
   if(e.ctrlKey||e.metaKey||e.altKey) return;
   if(!$("modal").hidden){ if(e.key==="Escape"){ e.preventDefault(); closeModal(); } return; }
-  var inPractice=route==="practice"||focusOpen(), inMeasure=route==="measure"&&!focusOpen();
+  var inPractice=route==="home"||route==="practice"||focusOpen(), inMeasure=route==="measure"&&!focusOpen();
   if(inMeasure){
     if(e.code==="Space"){ e.preventDefault(); if(M.phase==="setup") RT.measure.go(); else RT.measure.mark(); }
     else if(e.key==="Escape" && RT.measure.active()){ e.preventDefault(); RT.measure.cancel(); }
@@ -672,6 +663,16 @@ document.addEventListener("keydown",function(e){
   else if(k==="1"||k==="2"||k==="3"){ e.preventDefault(); RT.practice.rate({"1":"clean","2":"ok","3":"broke"}[k]); }
   else if(k==="f"||k==="F"||e.code==="KeyF"){ e.preventDefault(); setFocus(!focusOpen()); }
   else if(k==="Escape"){ if(focusOpen()){ e.preventDefault(); setFocus(false); } }
+});
+
+document.addEventListener("click",function(e){
+  var b=e.target.closest&&e.target.closest(".info-btn");
+  if(!b) return;
+  var pop=document.getElementById(b.getAttribute("aria-controls"));
+  if(!pop) return;
+  var open=pop.hidden;
+  pop.hidden=!open;
+  b.setAttribute("aria-expanded", open?"true":"false");
 });
 
 /* ======================= boot ======================= */

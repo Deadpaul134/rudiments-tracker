@@ -154,10 +154,25 @@ textarea.tin{min-height:70px;resize:vertical}
 .hero-side{display:flex;flex-direction:column;gap:12px;align-items:flex-start;min-width:0}
 .hero-sub{color:var(--muted);font-size:14.5px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.stats.thin{display:flex;gap:0;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;padding:2px 4px 12px;margin:0 0 18px}
+.stats.thin .stat{flex:1}
 .stat{text-align:center;padding:4px}
 .stat+.stat{border-inline-start:1px solid var(--line)}
 .stat-v{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;direction:ltr}
+.stats.thin .stat-v{font-size:22px}
 .stat-l{font-size:14px;color:var(--muted)}
+.stats.thin .stat-l{font-size:13px}
+.home-stage{width:min(720px,100%);margin-inline:auto}
+.home-stage #startToday{width:min(100%,440px);min-height:76px}
+.home-ask{font-size:19px;font-weight:600}
+.today-n{margin-inline-start:auto;color:var(--muted);font-size:14px;font-weight:600}
+.today-n b{font-variant-numeric:tabular-nums;color:var(--text)}
+.card-h-end{display:flex;align-items:center;gap:8px}
+.info-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--muted);display:inline-grid;place-items:center;padding:0;flex:none}
+.info-btn svg{width:18px;height:18px}
+.info-btn:hover,.info-btn[aria-expanded="true"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.info-pop{margin:0}
+.info-line{display:flex}
 .plan-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .plan-list li{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:16px;background:var(--card2)}
 .plan-list .tick{width:30px;height:30px;border-radius:50%;border:2px solid var(--line2);display:grid;place-items:center;color:transparent;flex:none}
@@ -227,6 +242,7 @@ textarea.tin{min-height:70px;resize:vertical}
 .rest{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px}
 .rest-q{font-size:19px}
 .rate-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.rate-row.quad{grid-template-columns:repeat(4,minmax(0,1fr))}
 .rate{min-height:84px;border-radius:20px;border:2px solid var(--line2);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:.12s}
 .rate b{font-size:22px}
 .rate small{font-size:12px;color:var(--dim)}
@@ -234,6 +250,9 @@ textarea.tin{min-height:70px;resize:vertical}
 .rate.r-clean:hover,.rate.r-clean.on{border-color:var(--good);background:var(--good-soft)}
 .rate.r-ok:hover,.rate.r-ok.on{border-color:var(--warn);background:var(--warn-soft)}
 .rate.r-broke:hover,.rate.r-broke.on{border-color:var(--bad);background:var(--bad-soft)}
+.rate.r-later b{color:var(--muted);font-size:18px}
+.rate.r-later:hover{border-color:var(--text);color:var(--text)}
+#homeRates{width:100%}
 .rest-next{font-size:15.5px}
 .raise{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;background:var(--good-soft);border:1px solid var(--good);border-radius:16px;padding:10px 14px;font-size:15.5px}
 .raise[hidden]{display:none}
@@ -412,7 +431,11 @@ body.focus-on{overflow:hidden}
   .hero-side{align-items:center}
   .goals{grid-template-columns:1fr}
   .stats{grid-template-columns:repeat(3,1fr);padding:10px}
+  .stats.thin{padding:0 0 10px}
+  .stats.thin .stat-v{font-size:20px}
   .stat-v{font-size:24px}
+  .rate-row.quad{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .home-stage .bpm-n{font-size:84px}
   .bpm-n{font-size:76px}
   .bpm{min-width:120px}
   .bpm-adj{width:48px;height:48px}
@@ -424,6 +447,11 @@ body.focus-on{overflow:hidden}
   .day{min-height:76px;border-radius:12px}
   .scr-h h1{font-size:26px}
   .mark{min-width:0;width:100%}
+}
+@media (max-height:820px){
+  .home-stage .bpm-n{font-size:84px}
+  .home-stage .rate{min-height:68px}
+  .home-stage #startToday{min-height:64px}
 }
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
 .ed-line select.tin.sm{min-width:118px}
