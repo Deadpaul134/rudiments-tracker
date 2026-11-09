@@ -3,6 +3,8 @@
 // Auth, in order:
 //   1. Google ID token (`idToken` in the JSON body, or `Authorization: Bearer <jwt>`). Data is stored
 //      under that Google `sub` in `user_records`. Verified via JWKS (aud, iss, exp).
+//      Or a "stay signed in" session (`session` in the body, lib/server/session.js) minted from such a
+//      token. Successful responses carry a fresh {session, sessionExp} after a Google sign-in and once a day.
 //   2. Legacy access code (`code` in the body, or Bearer when it is not a JWT). Reads and writes the
 //      original `records` table until someone claims it. After a claim this path returns 409.
 //
@@ -16,6 +18,7 @@
 import { json, options } from '../../lib/server/http.js';
 import { sameSecret } from '../../lib/server/secret.js';
 import { userFromRequest } from '../../lib/server/google.js';
+import { sessionFields } from '../../lib/server/session.js';
 import { counts, maxSeq, applyChanges, pullRows, readClaim, hasTable, upsertUser } from '../../lib/server/records.js';
 
 export { mergeRecord } from '../../lib/server/merge.js';
@@ -32,8 +35,8 @@ function validChange(c) {
     Number.isFinite(+c.updatedAt) && (c.deleted ? true : c.data !== undefined && c.data !== null);
 }
 
-async function status(db, sub) {
-  const body = { ok: true, app: 'rimon-rudiments-sync', cursor: await maxSeq(db, sub), counts: await counts(db, sub) };
+async function status(db, sub, extra) {
+  const body = { ok: true, app: 'rimon-rudiments-sync', cursor: await maxSeq(db, sub), counts: await counts(db, sub), ...(extra || {}) };
   if (sub) {
     const c = await readClaim(db);
     body.claim = { taken: !!(c && c.user_sub), mine: !!(c && c.user_sub === sub) };
@@ -54,7 +57,7 @@ async function authenticate(request, env, body) {
     }
     try { await upsertUser(env.DB, found.user, Date.now()); }
     catch (e) { return { error: json({ ok: false, error: 'db-error' }, 500) }; }
-    return { sub: found.user.sub };
+    return { sub: found.user.sub, extra: await sessionFields(found, env) };
   }
   // Legacy sync code. Missing secret is 500, wrong code is 401 — same as before accounts.
   if (!env.SYNC_CODE) return { error: json({ ok: false, error: 'not-configured' }, 500) };
@@ -67,8 +70,8 @@ async function authenticate(request, env, body) {
   return { sub: null };
 }
 
-async function handlePost(body, env, sub) {
-  if (body.ping) return status(env.DB, sub);
+async function handlePost(body, env, sub, extra) {
+  if (body.ping) return status(env.DB, sub, extra);
   const changesIn = Array.isArray(body.changes) ? body.changes : [];
   if (changesIn.length > MAX_CHANGES) return json({ ok: false, error: 'too-many-changes' }, 413);
   let since = Math.max(0, Math.floor(+body.since || 0));
@@ -98,7 +101,7 @@ async function handlePost(body, env, sub) {
     data: r.data == null ? null : JSON.parse(r.data),
   }));
   const cursor = changes.length ? changes[changes.length - 1].seq : Math.max(since, await maxSeq(db, sub));
-  const res = { ok: true, cursor, changes, written, reset, counts: await counts(db, sub) };
+  const res = { ok: true, cursor, changes, written, reset, counts: await counts(db, sub), ...(extra || {}) };
   if (sub) {
     const c = await readClaim(db);
     res.claim = { taken: !!(c && c.user_sub), mine: !!(c && c.user_sub === sub) };
@@ -112,7 +115,7 @@ export async function onRequestOptions() {
 export async function onRequestGet({ request, env }) {
   const auth = await authenticate(request, env, null);
   if (auth.error) return auth.error;
-  try { return await status(env.DB, auth.sub); }
+  try { return await status(env.DB, auth.sub, auth.extra); }
   catch (e) { return json({ ok: false, error: 'db-error' }, 500); }
 }
 export async function onRequestPost({ request, env }) {
@@ -126,6 +129,6 @@ export async function onRequestPost({ request, env }) {
   const auth = await authenticate(request, env, isObj(body) ? body : null);
   if (auth.error) return auth.error;
   if (!isObj(body)) return json({ ok: false, error: 'bad-json' }, 400);
-  try { return await handlePost(body, env, auth.sub); }
+  try { return await handlePost(body, env, auth.sub, auth.extra); }
   catch (e) { return json({ ok: false, error: 'db-error' }, 500); }
 }
