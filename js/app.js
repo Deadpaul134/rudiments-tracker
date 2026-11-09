@@ -685,6 +685,63 @@ if(RT.migratedNow) RT.toast("הנתונים מגרסה 1 הועברו ✓ (נש�
 document.addEventListener("visibilitychange",function(){ if(!document.hidden && route==="home") renderHome(); });
 
 // test / debugging hooks
+
+/* ======================= PWA install ======================= */
+(function(){
+  var installBtn=document.getElementById("installBtn");
+  var iosHint=document.getElementById("iosInstallHint");
+  var done=document.getElementById("installDone");
+  var installEvt=null;
+  function isStandalone(){
+    return (window.matchMedia && matchMedia("(display-mode: standalone)").matches)
+      || window.navigator.standalone===true;
+  }
+  function isIos(){
+    var ua=navigator.userAgent||"";
+    var iOS=/iPad|iPhone|iPod/.test(ua) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+    return iOS && !window.MSStream;
+  }
+  if(isStandalone()){
+    if(installBtn) installBtn.hidden=true;
+    if(iosHint) iosHint.hidden=true;
+    if(done) done.hidden=false;
+  }else if(isIos() && iosHint){
+    iosHint.hidden=false;
+  }
+  window.addEventListener("beforeinstallprompt", function(e){
+    e.preventDefault();
+    installEvt=e;
+    if(installBtn) installBtn.hidden=false;
+    if(iosHint) iosHint.hidden=true;
+  });
+  window.addEventListener("appinstalled", function(){
+    installEvt=null;
+    if(installBtn) installBtn.hidden=true;
+    if(done){ done.hidden=false; done.textContent="האפליקציה הותקנה בהצלחה."; }
+  });
+  if(installBtn){
+    installBtn.addEventListener("click", function(){
+      if(!installEvt) return;
+      var ev=installEvt;
+      installEvt=null;
+      installBtn.hidden=true;
+      ev.prompt();
+      Promise.resolve(ev.userChoice).then(function(choice){
+        if(choice && choice.outcome==="accepted" && done){
+          done.hidden=false;
+          done.textContent="האפליקציה הותקנה בהצלחה.";
+        }else if(choice && choice.outcome!=="accepted"){
+          installBtn.hidden=false;
+          installEvt=ev;
+        }
+      }).catch(function(){});
+    });
+  }
+  if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
+    navigator.serviceWorker.register("sw.js").catch(function(){ return null; });
+  }
+})();
+
 window.__rt = {
   state:function(){ return JSON.parse(JSON.stringify(RT.state)); },
   plan:function(){ return JSON.parse(JSON.stringify(RT.plan)); },

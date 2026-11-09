@@ -459,3 +459,10 @@ body.focus-on{overflow:hidden}
 .hero .btn.xl{white-space:normal;text-align:center;max-width:100%}
 @media (max-width:1180px){ .hero{gap:20px;padding:22px} .ring-wrap{width:140px;height:140px} .ring-n{font-size:36px} .hero .btn.xl{font-size:18px;padding:12px 22px} }
 @media (max-width:480px){ .bpm-adj[data-adj="5"],.bpm-adj[data-adj="-5"]{display:none} }
+
+
+/* ---------- PWA install card ---------- */
+.home-install{margin-top:4px;gap:12px}
+.home-install .btn[hidden],.ios-hint[hidden],#installDone[hidden]{display:none!important}
+.ios-hint{margin:0;padding:12px 14px;border:1px dashed var(--line2);border-radius:14px;background:var(--card2);line-height:1.45}
+.ios-hint b{color:var(--accent);font-weight:700}
