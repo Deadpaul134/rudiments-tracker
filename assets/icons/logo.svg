@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="מעקב רודימנטים">
+  <rect width="64" height="64" rx="14" fill="#de7a60"/>
+  <g fill="none" stroke="#fffaf5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" transform="translate(0,2) scale(2)">
+    <ellipse cx="16" cy="20" rx="11" ry="4.5"/>
+    <path d="M5 20v-2.5c0-2.5 4.9-4.5 11-4.5s11 2 11 4.5V20"/>
+    <path d="M9 4l7 11M23 4l-7 11"/>
+  </g>
+</svg>
