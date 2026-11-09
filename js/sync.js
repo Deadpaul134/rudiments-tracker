@@ -21,13 +21,16 @@ var S = (function(){
   s.sub=typeof s.sub==="string"?s.sub:"";
   s.email=typeof s.email==="string"?s.email:"";
   s.name=typeof s.name==="string"?s.name:"";
-  s.exp=+s.exp||0; s.hold=!!s.hold; s.claimed=!!s.claimed; s.claimChecked=!!s.claimChecked;
+  s.exp=+s.exp||0;
+  s.session=typeof s.session==="string"?s.session:""; s.sessionExp=+s.sessionExp||0; // "stay signed in" (server-issued, ~1 year)
+  s.hold=!!s.hold; s.claimed=!!s.claimed; s.claimChecked=!!s.claimChecked;
   return s;
 })();
 var PROFILES = RT.STORE_KEY+"-profiles";
 var clientId="";
 var busy=false, again=false, againFull=false, timer=null, fails=0, applying=false, fns=[], appliedFns=[];
-function save(){ RT.writeJSON(KEY,S); notify(); }
+var leaving=false;                                           // account switch in progress: the page reloads
+function save(){ if(leaving) return; RT.writeJSON(KEY,S); notify(); }
 function notify(){ fns.forEach(function(f){ try{ f(); }catch(e){} }); }
 
 /* ---------- records ---------- */
@@ -149,9 +152,15 @@ function apiUrl(name){
   var e=endpoint();
   return e ? e.replace(/\/api\/sync$/, "/api/"+name) : "";
 }
-function tokenLive(){
+function idTokenLive(){
   return !!(S.idToken && S.sub && (+S.exp)*1000 > Date.now()+5000);
 }
+function sessionLive(){
+  return !!(S.session && S.sub && (+S.sessionExp) > Date.now()+5000);
+}
+// Signed in = a live Google ID token (1 hour) or a live long session from the server (a year, sliding).
+function tokenLive(){ return idTokenLive() || sessionLive(); }
+function hadAccount(){ return !!S.sub; }                    // cleared only by signing out
 function configured(){
   if(!endpoint()) return false;
   if(tokenLive()) return true;
@@ -160,20 +169,32 @@ function configured(){
 function account(){
   var live=tokenLive();
   return {
-    signedIn:live, expired:!!(S.idToken && S.sub && !live),
+    signedIn:live, expired:!!(hadAccount() && !live),
     email:S.email, name:S.name, sub:S.sub||"",
     hold:!!(S.hold && live), claimed:!!S.claimed, claimChecked:!!S.claimChecked
   };
 }
+// Credentials for a request: a live Google ID token first (the server answers with a long session),
+// then the long session, then the legacy access code.
+function creds(){
+  if(idTokenLive()) return {idToken:S.idToken};
+  if(sessionLive()) return {session:S.session};
+  return {code:S.code};
+}
+function keepSession(j){
+  if(j && typeof j.session==="string" && j.session && +j.sessionExp>Date.now()){ S.session=j.session; S.sessionExp=+j.sessionExp; }
+}
 // text/plain POST → a "simple" request, no CORS preflight. A live Google token wins over the access code.
 function call(body){
-  var usingToken=tokenLive();
-  var cred=usingToken?{idToken:S.idToken}:{code:S.code};
+  var usingToken=tokenLive(), usingSession=!idTokenLive() && sessionLive();
+  var cred=creds();
   var opts={method:"POST", cache:"no-store", headers:{"Content-Type":"text/plain;charset=utf-8"},
     body:JSON.stringify(Object.assign(cred, body))};
   return fetch(endpoint(), opts).then(function(r){
     return r.json().catch(function(){ return {}; }).then(function(j){
       if(r.ok && j && j.claim && j.claim.mine) S.claimed=true;
+      if(r.ok) keepSession(j);
+      if(r.status===401 && usingSession){ S.session=""; S.sessionExp=0; if(RT.sync && RT.sync.silent) setTimeout(RT.sync.silent, 0); }
       if(r.status===401){ var e=new Error(usingToken?"פג תוקף הכניסה. היכנס שוב עם Google":"קוד הגישה שגוי"); e.auth=true; throw e; }
       if(r.status===409 && j && j.error==="claimed"){ var e2=new Error("ההיסטוריה שויכה לחשבון Google. היכנס עם Google כדי לסנכרן."); throw e2; }
       if(!r.ok || !j || j.ok!==true){
@@ -276,7 +297,7 @@ function decodeJwtPayload(token){
     return RT.isObj(j)?j:null;
   }catch(e){ return null; }
 }
-function currentProfileId(){ return (S.sub && S.idToken) ? "g:"+S.sub : "local"; }
+function currentProfileId(){ return hadAccount() ? "g:"+S.sub : "local"; }
 function readProfiles(){ var p=RT.readJSON(PROFILES,{}); return RT.isObj(p)?p:{}; }
 function snapshotActive(){
   var state=null, plan=null, syncs=null;
@@ -316,6 +337,7 @@ function signIn(idToken){
   profiles[currentProfileId()]=snapshotActive();
   if(!RT.writeJSON(PROFILES, profiles)){ if(RT.toast) RT.toast("לא ניתן לשמור את ההחלפה בדפדפן"); return false; }
   var server=S.server;
+  leaving=true;
   var next=profiles["g:"+info.sub];
   if(next && next.sync){
     restoreSnap(next);
@@ -336,22 +358,28 @@ function signIn(idToken){
       hold:true, claimed:false, claimChecked:false
     });
   }
-  location.reload();
+  reloadSoon();
   return true;
 }
+// Let the browser commit the switched account to storage before the page reloads.
+function reloadSoon(){ setTimeout(function(){ location.reload(); }, 150); }
 function signOut(){
   if(!S.sub) return false;
   var profiles=readProfiles();
-  profiles[currentProfileId()]=snapshotActive();
+  var mine=snapshotActive();
+  try{ var ms=JSON.parse(mine.sync||"null"); if(RT.isObj(ms)){ ms.session=""; ms.sessionExp=0; mine.sync=JSON.stringify(ms); } }catch(e){} // signing out ends the long session
+  profiles[currentProfileId()]=mine;
   var server=S.server;
   var local=profiles.local||null;
   if(!RT.writeJSON(PROFILES, profiles)){ if(RT.toast) RT.toast("לא ניתן לשמור את היציאה בדפדפן"); return false; }
+  leaving=true;                                               // a sync finishing now must not write the old account back
   restoreSnap(local);
   var ns=RT.readJSON(KEY,{}); if(!RT.isObj(ns)) ns={};
-  ns.idToken=""; ns.sub=""; ns.email=""; ns.name=""; ns.exp=0; ns.hold=false;
+  ns.idToken=""; ns.sub=""; ns.email=""; ns.name=""; ns.exp=0; ns.hold=false; ns.session=""; ns.sessionExp=0;
+  try{ if(window.google&&google.accounts&&google.accounts.id) google.accounts.id.disableAutoSelect(); }catch(e){}
   if(!ns.server && server) ns.server=server;
   RT.writeJSON(KEY, ns);
-  location.reload();
+  reloadSoon();
   return true;
 }
 function claim(code){
@@ -360,13 +388,14 @@ function claim(code){
   if(!code) return Promise.reject(new Error("הזן את קוד הגישה"));
   if(!apiUrl("claim")) return Promise.reject(new Error("חסרה כתובת שרת"));
   return fetch(apiUrl("claim"), {method:"POST", cache:"no-store", headers:{"Content-Type":"text/plain;charset=utf-8"},
-    body:JSON.stringify({idToken:S.idToken, code:code})}).then(function(r){
+    body:JSON.stringify(Object.assign(creds(), {code:code}))}).then(function(r){
     return r.json().catch(function(){ return {}; }).then(function(j){
       if(r.status===401){
         var e=new Error(j&&j.error==="bad-code"?"קוד הגישה שגוי":"פג תוקף הכניסה. היכנס שוב עם Google");
         e.auth=!(j&&j.error==="bad-code"); throw e;
       }
       if(r.status===409) throw new Error("ההיסטוריה כבר משויכת לחשבון אחר.");
+      if(r.status===401 && !(j&&j.error==="bad-code") && sessionLive() && !idTokenLive()){ S.session=""; S.sessionExp=0; save(); }
       if(!r.ok || !j || j.ok!==true) throw new Error(j&&j.error==="not-migrated"?"השרת עדיין בלי טבלאות החשבונות.":"השיוך נכשל");
       S.hold=false; S.claimed=true; S.claimChecked=true; S.cursor=0; S.lastOk=0; S.meta={}; S.dirty={}; S.lastErr=""; S.authErr=false;
       save();
@@ -403,6 +432,20 @@ function bootAccount(){
   return true;
 }
 
+// True when a Google re-sign-in would help: this browser had an account, there is no long session,
+// and the 1-hour Google token is gone or about to go. The app then asks Google quietly (auto-select).
+function needsRefresh(){
+  return hadAccount() && !sessionLive() && (+S.exp)*1000 < Date.now()+3*60000;
+}
+var refreshTimer=null;
+function armRefresh(){
+  clearTimeout(refreshTimer);
+  if(!hadAccount() || sessionLive() || !idTokenLive()) return;
+  var ms=Math.max(1000, (+S.exp)*1000 - Date.now() - 2*60000);
+  refreshTimer=setTimeout(function(){ if(RT.sync.silent) RT.sync.silent(); }, Math.min(ms, 2147483000));
+}
+fns.push(armRefresh);
+
 RT.sync = {
   entry:function(){}, session:function(){},                // picked up by the change scan
   del:function(subId,x){ if(!x||!x.date) return; S.meta["e:"+subId+"|"+x.date]=[null,Date.now(),1]; S.dirty["e:"+subId+"|"+x.date]=1; save(); schedule(1500); },
@@ -411,7 +454,8 @@ RT.sync = {
   test:test, status:status, setConfig:setConfig, configured:configured, endpoint:endpoint,
   state:function(){ return S; }, busy:function(){ return busy; }, pending:function(){ return Object.keys(S.dirty).length; },
   onChange:function(f){ fns.push(f); }, onApplied:function(f){ appliedFns.push(f); },
-  account:account, clientId:function(){ return clientId; },
+  account:account, clientId:function(){ return clientId; }, needsRefresh:needsRefresh,
+  silent:null,                                              // set by app.js: quiet Google re-sign-in
   signIn:signIn, signOut:signOut, claim:claim, skipClaim:skipClaim
 };
 RT.onChange(function(){ if(applying) return; if(scan() && configured()) schedule(1500); });

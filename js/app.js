@@ -373,31 +373,55 @@ function renderSettings(){
   $("migInfo").textContent = meta.fromV1 ? "הנתונים מגרסה 1 הועברו אוטומטית ב-"+RT.fmtDate(meta.at,true)+". עותק מלא של נתוני גרסה 1 נשמר בדפדפן כגיבוי." : "";
   renderEditor(); renderWeeklyEditor();
 }
-var gsiMountedFor="";
+/* Google Identity Services. One init for both the button and the quiet re-sign-in: auto_select lets Google
+   hand back a fresh token without a click when this browser already signed in with that account. */
+var gsiInitFor="", gsiMountedFor="", gsiLoading=null;
+function loadGsi(){
+  if(window.google&&google.accounts&&google.accounts.id) return Promise.resolve();
+  if(gsiLoading) return gsiLoading;
+  gsiLoading=new Promise(function(res, rej){
+    var s=document.createElement("script");
+    s.id="gsiScript"; s.src="https://accounts.google.com/gsi/client?hl=he"; s.async=true;
+    s.onload=function(){ res(); };
+    s.onerror=function(){ gsiLoading=null; rej(new Error("gsi")); };
+    document.head.appendChild(s);
+  });
+  return gsiLoading;
+}
+function initGsi(clientId){
+  if(!window.google||!google.accounts||!google.accounts.id) return false;
+  if(gsiInitFor===clientId) return true;
+  gsiInitFor=clientId;
+  google.accounts.id.initialize({
+    client_id: clientId,
+    callback: function(resp){ if(resp&&resp.credential) RT.sync.signIn(resp.credential); },
+    auto_select: true,
+    cancel_on_tap_outside: true,
+    itp_support: true,
+    use_fedcm_for_prompt: true
+  });
+  return true;
+}
 function mountGsi(clientId){
-  if(gsiMountedFor===clientId) return;
+  if(gsiMountedFor===clientId && $("googleBtn") && $("googleBtn").childNodes.length) return;
   gsiMountedFor=clientId;
-  function render(){
-    if(!window.google||!google.accounts||!google.accounts.id) return;
-    google.accounts.id.initialize({
-      client_id: clientId,
-      callback: function(resp){ if(resp&&resp.credential) RT.sync.signIn(resp.credential); },
-      auto_select: false,
-      cancel_on_tap_outside: true,
-      itp_support: true
-    });
+  loadGsi().then(function(){
+    if(!initGsi(clientId)) return;
     var el=$("googleBtn"); if(!el) return;
     el.innerHTML="";
     google.accounts.id.renderButton(el, {theme:"outline", size:"large", shape:"pill", text:"signin_with", locale:"he", width:240});
-  }
-  if(window.google&&google.accounts&&google.accounts.id){ render(); return; }
-  if(document.getElementById("gsiScript")) return;
-  var s=document.createElement("script");
-  s.id="gsiScript"; s.src="https://accounts.google.com/gsi/client?hl=he"; s.async=true;
-  s.onload=render;
-  s.onerror=function(){ var h=$("googleHint"); if(h){ h.hidden=false; h.textContent="כפתור Google לא נטען. בדוק את החיבור ונסה לרענן."; } };
-  document.head.appendChild(s);
+  }, function(){ gsiMountedFor=""; var h=$("googleHint"); if(h){ h.hidden=false; h.textContent="כפתור Google לא נטען. בדוק את החיבור ונסה לרענן."; } });
 }
+// Quiet re-sign-in when the Google token ran out and there is no long session (or it was rejected).
+var lastSilent=0;
+function silentGoogle(){
+  var id=RT.sync.clientId();
+  if(!id || !RT.sync.needsRefresh() || navigator.onLine===false) return;
+  if(Date.now()-lastSilent < 10*60000) return;                // Google itself also rate-limits auto sign-in
+  lastSilent=Date.now();
+  loadGsi().then(function(){ if(initGsi(id)) google.accounts.id.prompt(); }, function(){});
+}
+RT.sync.silent=silentGoogle;
 function renderAccount(){
   var slot=$("googleSlot"); if(!slot||!RT.sync||!RT.sync.account) return;
   var id=RT.sync.clientId(), a=RT.sync.account();
@@ -417,6 +441,7 @@ function renderAccount(){
   $("claimedNote").hidden=!(a.signedIn&&a.claimed);
   $("legacyCode").hidden=!!(a.signedIn||a.expired);
   if(id&&!a.signedIn) mountGsi(id);
+  if(id&&a.expired) silentGoogle();
 }
 function renderSync(){
   renderAccount();
