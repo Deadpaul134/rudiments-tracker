@@ -461,6 +461,13 @@ body.focus-on{overflow:hidden}
 @media (max-width:480px){ .bpm-adj[data-adj="5"],.bpm-adj[data-adj="-5"]{display:none} }
 
 
+/* ---------- Share app link ---------- */
+.share-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 14px;border-radius:999px;border:1px solid var(--line2);background:var(--card2);color:var(--muted);font:inherit;font-size:14px;font-weight:700;cursor:pointer;flex:none;white-space:nowrap}
+.share-btn svg{width:18px;height:18px}
+.share-btn:hover{color:var(--accent);border-color:var(--accent)}
+.home-tools{display:flex;justify-content:flex-start;margin:0 0 12px}
+.scr-h-lead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
+
 /* ---------- PWA install card ---------- */
 .home-install{margin-top:4px;gap:12px}
 .home-install .btn[hidden],.ios-hint[hidden],#installDone[hidden]{display:none!important}

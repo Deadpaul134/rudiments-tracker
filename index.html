@@ -52,6 +52,7 @@
 <!-- ================= בית ================= -->
 <section class="screen" id="screen-home" data-screen="home" aria-labelledby="homeTitle">
   <h1 class="sr" id="homeTitle">תרגול</h1>
+  <div class="home-tools"><button type="button" class="share-btn" data-share-app aria-label="שתף קישור למעקב הרודימנטים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg><span>שתף</span></button></div>
   <div class="stats thin" id="homeStats">
     <div class="stat"><div class="stat-v" id="stStreak">0</div><div class="stat-l">ימי רצף</div></div>
     <div class="stat"><div class="stat-v" id="stWeek">0/7</div><div class="stat-l">ימי תרגול השבוע</div></div>
@@ -103,7 +104,7 @@
 <!-- ================= תרגול ================= -->
 <section class="screen" id="screen-practice" data-screen="practice" aria-labelledby="practiceTitle" hidden>
   <header class="scr-h">
-    <h1 id="practiceTitle">תרגול</h1>
+    <div class="scr-h-lead"><h1 id="practiceTitle">תרגול</h1><button type="button" class="share-btn" data-share-app aria-label="שתף קישור למעקב הרודימנטים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg><span>שתף</span></button></div>
     <div class="seg big" role="tablist"><a href="#practice" class="on" role="tab" aria-selected="true">שגרה יומית</a><a href="#measure" role="tab" aria-selected="false">מדידה שבועית</a></div>
   </header>
   <div class="practice-grid">
@@ -171,7 +172,7 @@
 <!-- ================= מדידה שבועית ================= -->
 <section class="screen" id="screen-measure" data-screen="measure" aria-labelledby="measureTitle" hidden>
   <header class="scr-h">
-    <h1 id="measureTitle">מדידה שבועית</h1>
+    <div class="scr-h-lead"><h1 id="measureTitle">מדידה שבועית</h1><button type="button" class="share-btn" data-share-app aria-label="שתף קישור למעקב הרודימנטים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg><span>שתף</span></button></div>
     <div class="seg big" role="tablist"><a href="#practice" role="tab" aria-selected="false">שגרה יומית</a><a href="#measure" class="on" role="tab" aria-selected="true">מדידה שבועית</a></div>
   </header>
   <div class="practice-grid">
@@ -235,7 +236,7 @@
 <!-- ================= התקדמות ================= -->
 <section class="screen" id="screen-progress" data-screen="progress" aria-labelledby="progressTitle" hidden>
   <header class="scr-h">
-    <h1 id="progressTitle">התקדמות</h1>
+    <div class="scr-h-lead"><h1 id="progressTitle">התקדמות</h1><button type="button" class="share-btn" data-share-app aria-label="שתף קישור למעקב הרודימנטים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg><span>שתף</span></button></div>
     <button type="button" class="btn" id="copySummary">העתק סיכום למאסטרו</button>
   </header>
   <div class="card">
@@ -274,7 +275,7 @@
 <!-- ================= ספרייה ================= -->
 <section class="screen" id="screen-library" data-screen="library" aria-labelledby="libraryTitle" hidden>
   <header class="scr-h">
-    <h1 id="libraryTitle">ספרייה</h1>
+    <div class="scr-h-lead"><h1 id="libraryTitle">ספרייה</h1><button type="button" class="share-btn" data-share-app aria-label="שתף קישור למעקב הרודימנטים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg><span>שתף</span></button></div>
     <button type="button" class="btn primary" id="addEx">+ תרגיל חדש</button>
   </header>
   <nav class="cats" id="cats" role="tablist" aria-label="קטגוריות"></nav>
@@ -283,7 +284,7 @@
 
 <!-- ================= הגדרות ================= -->
 <section class="screen" id="screen-settings" data-screen="settings" aria-labelledby="settingsTitle" hidden>
-  <header class="scr-h"><h1 id="settingsTitle">הגדרות</h1></header>
+  <header class="scr-h"><div class="scr-h-lead"><h1 id="settingsTitle">הגדרות</h1><button type="button" class="share-btn" data-share-app aria-label="שתף קישור למעקב הרודימנטים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg><span>שתף</span></button></div></header>
   <div class="set-grid">
     <div class="col">
       <div class="card">
