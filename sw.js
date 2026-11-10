@@ -1,7 +1,7 @@
 /* Rudiments Tracker service worker: versioned app-shell cache for offline;
    network-first HTML. Never cache or intercept /api/*, Google auth, or non-GET. */
 "use strict";
-var VERSION = "rt-v2";
+var VERSION = "rt-v3";
 var APP = "rt-app-" + VERSION;
 var FILES = [
   "./",

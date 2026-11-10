@@ -767,6 +767,26 @@ document.addEventListener("visibilitychange",function(){ if(!document.hidden && 
   }
 })();
 
+/* ======================= Share app link ======================= */
+(function(){
+  var SHARE = {
+    url: "https://rudiments-tracker.pages.dev/",
+    title: "מעקב רודימנטים",
+    text: "מעקב רודימנטים – תרגול יומי, מדידה שבועית והתקדמות בתופים."
+  };
+  function shareApp(){
+    var payload = { title: SHARE.title, text: SHARE.text, url: SHARE.url };
+    var p = navigator.share ? navigator.share(payload) : Promise.reject(new Error("no-share"));
+    return p.catch(function(err){
+      if(err && err.name === "AbortError") return;
+      return copyText(SHARE.url).then(function(ok){ RT.toast(ok ? "הקישור הועתק" : "ההעתקה נכשלה"); });
+    });
+  }
+  document.querySelectorAll("[data-share-app]").forEach(function(btn){
+    btn.addEventListener("click", function(){ shareApp(); });
+  });
+})();
+
 window.__rt = {
   state:function(){ return JSON.parse(JSON.stringify(RT.state)); },
   plan:function(){ return JSON.parse(JSON.stringify(RT.plan)); },
